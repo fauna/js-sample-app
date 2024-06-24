@@ -1,8 +1,10 @@
 collection Customer {
   name: String
   email: String
+  // Use a computed field to get the set of Orders for a customer.
   compute orders: Set<Order> = ((doc) => Order.byCustomer(doc))
 
+  // Use a unique constraint to ensure no two customers have the same email.
   unique [.email]
 }
 
@@ -11,6 +13,8 @@ collection Order {
   status: "cart" | "processing" | "shipped" | "delivered"
   createdAt: Time
 
+  // Define an index to get all orders for a customer. Orders will be sorted by
+  // createdAt in descending order.
   index byCustomer {
     terms [.customer]
     values [desc(.createdAt), .status]
@@ -23,5 +27,6 @@ collection Product {
   stock: Int
   description: String?
 
+  // Use a unique constraint to ensure no two products have the same name.
   unique [.name]
 }
