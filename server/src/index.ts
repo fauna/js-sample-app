@@ -1,7 +1,10 @@
 import express, { Request, Response, Application } from "express";
+import routes from "./routes/routes";
 
 const app: Application = express();
 const port = process.env.PORT || 8000;
+
+app.use(routes);
 
 app.get("/ping", (req: Request, res: Response) => {
   res.send("pong");
