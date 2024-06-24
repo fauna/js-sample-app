@@ -1,0 +1,27 @@
+collection Customer {
+  name: String
+  email: String
+  compute orders: Set<Order> = ((doc) => Order.byCustomer(doc))
+
+  unique [.email]
+}
+
+collection Order {
+  customer: Ref<Customer>
+  status: "cart" | "processing" | "shipped" | "delivered"
+  createdAt: Time
+
+  index byCustomer {
+    terms [.customer]
+    values [desc(.createdAt), .status]
+  }
+}
+
+collection Product {
+  name: String
+  price: Number
+  stock: Int
+  description: String?
+
+  unique [.name]
+}
