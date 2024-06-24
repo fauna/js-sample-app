@@ -22,7 +22,13 @@ router.get("/customer/:id", async (req: Request, res: Response) => {
         .send({ reason: `No customer with id '${id}' exists.` });
     }
 
-    return res.status(200).send({ ...customer });
+    return res
+      .status(200)
+      .send({
+        name: customer.name,
+        email: customer.email,
+        orders: customer.orders,
+      });
   } catch (error) {
     console.error(error);
     return res.status(500).send({ reason: "The request failed unexpectedly." });
