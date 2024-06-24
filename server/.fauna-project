@@ -1,0 +1,6 @@
+schema_directory=./schema
+default=dev
+
+[environment.dev]
+endpoint=fauna-us
+database=ecommerce_sample_app/dev
