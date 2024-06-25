@@ -12,7 +12,7 @@ collection Customer {
   compute cart: Order? = ((doc) => doc.orders.firstWhere(o => o.status == "cart"))
 
   // Use a computed field to get the set of Orders for a customer.
-  compute orders = ((doc) => Order.byCustomer(doc))
+  compute orders: Set<Order> = ((doc) => Order.byCustomer(doc))
 
   // Use a unique constraint to ensure no two customers have the same email.
   unique [.email]
