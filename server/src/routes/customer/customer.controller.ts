@@ -34,12 +34,12 @@ router.get("/customer/:id", async (req: Request, res: Response) => {
 
 /**
  * Create customer
- * @route {POST} /customer
+ * @route {PUT} /customer
  * @bodyparam name
  * @bodyparam email
  * @returns Customer
  */
-router.post("/customer", async (req: Request, res: Response) => {
+router.put("/customer", async (req: Request, res: Response) => {
   try {
     const { name, email } = req.body;
     const { data: customer } = await createCustomer({ name, email });

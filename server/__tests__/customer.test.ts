@@ -35,11 +35,11 @@ describe("Customer endpoints", () => {
     });
   });
 
-  describe("POST /customer", () => {
+  describe("PUT /customer", () => {
     it("returns a 201 if the customer is created successfully", async () => {
       const ts = new Date().getTime();
       const res = await req(app)
-        .post("/customer")
+        .put("/customer")
         .send({ name: "Bob", email: `bob+${ts}@fauna.com` });
       expect(res.status).toEqual(201);
       expect(res.body.name).toEqual("Bob");
@@ -48,7 +48,7 @@ describe("Customer endpoints", () => {
 
     it("returns a 409 if the customer already exists", async () => {
       const res = await req(app)
-        .post("/customer")
+        .put("/customer")
         .send({ name: "Not Alice", email: alice.email });
       expect(res.status).toEqual(409);
       expect(res.body.reason).toEqual(
