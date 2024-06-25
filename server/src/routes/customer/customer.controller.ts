@@ -1,6 +1,6 @@
+import { NullDocument, ServiceError } from "fauna";
 import { Request, Response, Router } from "express";
-import { NullDocument } from "fauna";
-import { getCustomer } from "./customer.service";
+import { getCustomer, createCustomer } from "./customer.service";
 
 const router = Router();
 
@@ -22,15 +22,40 @@ router.get("/customer/:id", async (req: Request, res: Response) => {
         .send({ reason: `No customer with id '${id}' exists.` });
     }
 
-    return res
-      .status(200)
-      .send({
-        name: customer.name,
-        email: customer.email,
-        orders: customer.orders,
-      });
+    return res.status(200).send({
+      name: customer.name,
+      email: customer.email,
+      orders: customer.orders,
+    });
   } catch (error) {
-    console.error(error);
+    return res.status(500).send({ reason: "The request failed unexpectedly." });
+  }
+});
+
+/**
+ * Create customer
+ * @route {POST} /customer
+ * @bodyparam name
+ * @bodyparam email
+ * @returns Customer
+ */
+router.post("/customer", async (req: Request, res: Response) => {
+  try {
+    const { name, email } = req.body;
+    const { data: customer } = await createCustomer({ name, email });
+
+    return res.status(201).send({ name: customer.name, email: customer.email });
+  } catch (error) {
+    // Handle errors returned by Fauna here.
+    if (error instanceof ServiceError) {
+      // We have a single unique constraint on the email field.
+      if (error.code === "constraint_failure") {
+        return res
+          .status(409)
+          .send({ reason: "A customer with that email already exists." });
+      }
+    }
+
     return res.status(500).send({ reason: "The request failed unexpectedly." });
   }
 });
