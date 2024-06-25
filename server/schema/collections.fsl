@@ -2,17 +2,17 @@ collection Customer {
   name: String
   email: String
   address: {
-    street: String
-    city: String
-    state: String
-    postalCode: String
+    street: String,
+    city: String,
+    state: String,
+    postalCode: String,
     country: String
   }
 
-  cart: Order? = ((doc) => doc.orders.filter(o => o.status == "cart").pageSize(10))
+  compute cart: Order? = ((doc) => doc.orders.firstWhere(o => o.status == "cart"))
 
   // Use a computed field to get the set of Orders for a customer.
-  compute orders: Set<Order> = ((doc) => Order.byCustomer(doc))
+  compute orders = ((doc) => Order.byCustomer(doc))
 
   // Use a unique constraint to ensure no two customers have the same email.
   unique [.email]
@@ -25,7 +25,7 @@ collection Customer {
 collection Product {
   name: String
   description: String
-  price: Long
+  price: Number
   category: Ref<Category>
   stock: Int
 
@@ -42,7 +42,7 @@ collection Product {
 collection Category {
   name: String
   description: String
-  products: Set<Product> = ((doc) => Product.byCategory(doc))
+  compute products: Set<Product> = ((doc) => Product.byCategory(doc))
 
   unique [.name]
 
@@ -56,8 +56,21 @@ collection Order {
   status: "cart" | "processing" | "shipped" | "delivered"
   createdAt: Time
 
-  items: Set<OrderItem> = ((order) => OrderItem.byOrder(order))
-  total: Long = ((order) => order.items.reduce((sum, orderItem) => sum + orderItem.product.price * orderItem.quantity))
+  compute items: Set<OrderItem> = ((order) => OrderItem.byOrder(order))
+  compute total: Number = ((order) => order.items.fold(0, (sum, orderItem) => {
+    let orderItem: Any = orderItem
+    if (orderItem.product != null) {
+      sum + orderItem.product.price * orderItem.quantity
+    } else {
+      sum
+    }
+  }))
+  payment: { *: Any }
+
+  check singleItemInCart ((order) => {
+    let customer: Any = order.customer
+    customer!.cart == null
+  })
 
   // Define an index to get all orders for a customer. Orders will be sorted by
   // createdAt in descending order.
@@ -72,9 +85,12 @@ collection OrderItem {
   product: Ref<Product>
   quantity: Int
 
+  unique [.order, .product]
+  check positiveQuantity ((orderItem) => orderItem.quantity > 0)
+
   index byOrder {
     terms [.order]
-    values: [.product, .quantity]
+    values [.product, .quantity]
   }
 }
 
