@@ -1,17 +1,63 @@
 collection Customer {
   name: String
   email: String
+  address: {
+    street: String
+    city: String
+    state: String
+    postalCode: String
+    country: String
+  }
+
+  cart: Order? = ((doc) => doc.orders.filter(o => o.status == "cart").pageSize(10))
+
   // Use a computed field to get the set of Orders for a customer.
   compute orders: Set<Order> = ((doc) => Order.byCustomer(doc))
 
   // Use a unique constraint to ensure no two customers have the same email.
   unique [.email]
+
+  index byEmail {
+    terms [.email]
+  }
+}
+
+collection Product {
+  name: String
+  description: String
+  price: Long
+  category: Ref<Category>
+  stock: Int
+
+  // Use a unique constraint to ensure no two products have the same name.
+  unique [.name]
+  check stockIsValid ((product) => product.stock >= 0)
+  check priceIsValid ((product) => product.price >= 0)
+
+  index byCategory {
+    terms [.category]
+  }
+}
+
+collection Category {
+  name: String
+  description: String
+  products: Set<Product> = ((doc) => Product.byCategory(doc))
+
+  unique [.name]
+
+  index byName {
+    terms [.name]
+  }
 }
 
 collection Order {
   customer: Ref<Customer>
   status: "cart" | "processing" | "shipped" | "delivered"
   createdAt: Time
+
+  items: Set<OrderItem> = ((order) => OrderItem.byOrder(order))
+  total: Long = ((order) => order.items.reduce((sum, orderItem) => sum + orderItem.product.price * orderItem.quantity))
 
   // Define an index to get all orders for a customer. Orders will be sorted by
   // createdAt in descending order.
@@ -21,12 +67,14 @@ collection Order {
   }
 }
 
-collection Product {
-  name: String
-  price: Number
-  stock: Int
-  description: String?
+collection OrderItem {
+  order: Ref<Order>
+  product: Ref<Product>
+  quantity: Int
 
-  // Use a unique constraint to ensure no two products have the same name.
-  unique [.name]
+  index byOrder {
+    terms [.order]
+    values: [.product, .quantity]
+  }
 }
+
