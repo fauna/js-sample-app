@@ -20,26 +20,26 @@ describe("Customer endpoints", () => {
     faunaClient.close();
   });
 
-  describe("GET /customer", () => {
+  describe("GET /customers/:id", () => {
     it("returns a 200 if the customer exists", async () => {
-      const res = await req(app).get(`/customer/${alice.id}`);
+      const res = await req(app).get(`/customers/${alice.id}`);
       expect(res.status).toEqual(200);
       expect(res.body.name).toEqual(alice.name);
       expect(res.body.email).toEqual(alice.email);
     });
 
     it("returns a 404 if the customer does not exist", async () => {
-      const res = await req(app).get("/customer/1234");
+      const res = await req(app).get("/customers/1234");
       expect(res.status).toEqual(404);
       expect(res.body.reason).toEqual("No customer with id '1234' exists.");
     });
   });
 
-  describe("PUT /customer", () => {
+  describe("POST /customers", () => {
     it("returns a 201 if the customer is created successfully", async () => {
       const ts = new Date().getTime();
       const res = await req(app)
-        .put("/customer")
+        .post("/customers")
         .send({ name: "Bob", email: `bob+${ts}@fauna.com` });
       expect(res.status).toEqual(201);
       expect(res.body.name).toEqual("Bob");
@@ -48,7 +48,7 @@ describe("Customer endpoints", () => {
 
     it("returns a 409 if the customer already exists", async () => {
       const res = await req(app)
-        .put("/customer")
+        .post("/customers")
         .send({ name: "Not Alice", email: alice.email });
       expect(res.status).toEqual(409);
       expect(res.body.reason).toEqual(

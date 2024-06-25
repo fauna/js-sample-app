@@ -5,12 +5,12 @@ import { getCustomer, createCustomer } from "./customer.service";
 const router = Router();
 
 /**
- * Get customer
+ * Get a customer
  * @route {GET} /customer/:id
  * @param id string
  * @returns Customer
  */
-router.get("/customer/:id", async (req: Request, res: Response) => {
+router.get("/customers/:id", async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const { data: customer } = await getCustomer(id);
@@ -33,13 +33,13 @@ router.get("/customer/:id", async (req: Request, res: Response) => {
 });
 
 /**
- * Create customer
- * @route {PUT} /customer
+ * Create a customer
+ * @route {POST} /customer
  * @bodyparam name
  * @bodyparam email
  * @returns Customer
  */
-router.put("/customer", async (req: Request, res: Response) => {
+router.post("/customers", async (req: Request, res: Response) => {
   try {
     const { name, email } = req.body;
     const { data: customer } = await createCustomer({ name, email });
