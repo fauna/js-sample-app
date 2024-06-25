@@ -1,22 +1,22 @@
+import { fql } from "fauna";
 import req from "supertest";
 import app from "../src/app";
 import { faunaClient } from "../src/fauna/fauna-client";
 import { Customer } from "../src/routes/customer/customer.model";
-import { createCustomer } from "../src/routes/customer/customer.service";
 
 describe("Customer endpoints", () => {
   let alice: Customer;
 
   beforeAll(async () => {
+    // Create a new customer to test against.
     const ts = new Date().getTime();
-    const res = await createCustomer({
-      name: "Alice",
-      email: `alice+${ts}@fauna.com`,
-    });
+    const doc = { name: "Alice", email: `alice+${ts}@fauna.com` };
+    const res = await faunaClient.query<Customer>(fql`Customer.create(${doc})`);
     alice = res.data;
   });
 
   afterAll(async () => {
+    // Clean up our connection to Fauna.
     faunaClient.close();
   });
 

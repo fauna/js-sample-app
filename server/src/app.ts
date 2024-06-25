@@ -1,5 +1,5 @@
 import dotenv from "dotenv";
-dotenv.config(); // Load .env file
+dotenv.config(); // Load the .env file
 import express, { Application, Request, Response } from "express";
 import bodyParser from "body-parser";
 import routes from "./routes/routes";
