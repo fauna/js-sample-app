@@ -27,7 +27,14 @@ export const fetchCreateCustomerCart = async (id: string) => {
         customer: Customer.byId(${id}),
         createdAt: Time.now(),
         payment: {}
-      })
+      }) {
+        id,
+        status,
+        createdAt,
+        payment,
+        items,
+        total
+      }
 
     } else {
       customer!.cart {
