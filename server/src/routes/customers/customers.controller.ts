@@ -29,7 +29,6 @@ router.get("/customers/:id", async (req: Request, res: Response) => {
       orders: customer.orders,
     });
   } catch (error) {
-    console.log(error);
     return res.status(500).send({ reason: "The request failed unexpectedly." });
   }
 });
