@@ -15,4 +15,4 @@ export interface Customer {
   };
 }
 
-export type CustomerInput = Pick<Customer, "name" | "email">;
+export type CustomerInput = Pick<Customer, "name" | "email" | "address">;
