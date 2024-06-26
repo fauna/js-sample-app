@@ -38,8 +38,12 @@ collection Product {
     terms [.category]
   }
 
+  index sortedByCategory {
+    values [.category]
+  }
+
   index byName {
-    terms [.name]
+     terms [.name]
   }
 }
 
