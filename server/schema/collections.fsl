@@ -68,8 +68,7 @@ collection Order {
   payment: { *: Any }
 
   check singleItemInCart (order => {
-    let customer: Any = order.customer
-    customer!.cart == null
+    Order.byCustomerAndStatus(order.customer, "cart").count() <= 1
   })
 
   // Define an index to get all orders for a customer. Orders will be sorted by
