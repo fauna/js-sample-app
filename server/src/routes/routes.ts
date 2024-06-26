@@ -1,6 +1,6 @@
 import { Router } from "express";
-import customerController from "./customer/customer.controller";
+import customersController from "./customers/customers.controller";
 
-const api = Router().use(customerController);
+const api = Router().use(customersController);
 
 export default Router().use("/", api);

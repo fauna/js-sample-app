@@ -2,7 +2,7 @@ import { fql } from "fauna";
 import req from "supertest";
 import app from "../src/app";
 import { faunaClient } from "../src/fauna/fauna-client";
-import { Customer } from "../src/routes/customer/customer.model";
+import { Customer } from "../src/routes/customers/customers.model";
 
 describe("Customer endpoints", () => {
   let alice: Customer;

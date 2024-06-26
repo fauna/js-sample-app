@@ -1,6 +1,6 @@
 import { NullDocument, ServiceError } from "fauna";
 import { Request, Response, Router } from "express";
-import { getCustomer, createCustomer } from "./customer.service";
+import { getCustomer, createCustomer } from "./customers.service";
 
 const router = Router();
 
