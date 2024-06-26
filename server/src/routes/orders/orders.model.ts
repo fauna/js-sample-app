@@ -1,6 +1,6 @@
 import { TimeStub } from "fauna";
-import { Product } from "../product/product.model";
-import { Customer } from "../customer/customer.model";
+import { Product } from "../products/products.model";
+import { Customer } from "../customers/customers.model";
 
 export interface Order {
   id: string;

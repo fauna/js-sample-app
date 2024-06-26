@@ -18,6 +18,14 @@ fauna create-database E_Commerce
 
 to create the database we will use for the E-Commerce application we're building.
 
+Now you've got the database we'll use. At this point we'll push our schema by running:
+
+```
+fauna schema push
+```
+
+This will use the `.fauna-project` file to push the files in the `/schema` directory.
+
 
 
 ## To Start
