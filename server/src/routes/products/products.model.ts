@@ -1,5 +1,4 @@
 export interface Product {
-  id: string;
   name: string;
   description: string;
   price: number;
@@ -8,7 +7,6 @@ export interface Product {
 }
 
 export interface Category {
-  id: string;
   name: string;
   description: string;
   products: Product[];
