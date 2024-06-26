@@ -1,8 +1,18 @@
+import { Order } from "../order/order.model";
+
 export interface Customer {
   id: string;
   name: string;
   email: string;
-  orders: any; // TODO: Define order type
+  cart?: Order;
+  orders: Order[];
+  address: {
+    street: string;
+    city: string;
+    state: string;
+    postalCode: string;
+    country: string;
+  };
 }
 
 export type CustomerInput = Pick<Customer, "name" | "email">;
