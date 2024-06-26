@@ -4,5 +4,4 @@ export interface Customer {
   email: string;
   orders: any; // TODO: Define order type
 }
-
 export type CustomerInput = Pick<Customer, "name" | "email">;
