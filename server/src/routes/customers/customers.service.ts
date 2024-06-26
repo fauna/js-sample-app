@@ -1,6 +1,6 @@
 import { fql } from "fauna";
 import { faunaClient } from "../../fauna/fauna-client";
-import { Customer, CustomerInput } from "./customer.model";
+import { Customer, CustomerInput } from "./customers.model";
 
 export const getCustomer = async (id: string) => {
   return await faunaClient.query<Customer>(fql`Customer.byId(${id})`);

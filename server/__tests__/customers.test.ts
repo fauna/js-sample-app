@@ -1,8 +1,9 @@
 import { fql } from "fauna";
 import req from "supertest";
 import app from "../src/app";
+import { mockAddr } from "./mocks";
 import { faunaClient } from "../src/fauna/fauna-client";
-import { Customer } from "../src/routes/customer/customer.model";
+import { Customer } from "../src/routes/customers/customers.model";
 
 describe("Customer endpoints", () => {
   let alice: Customer;
@@ -10,7 +11,11 @@ describe("Customer endpoints", () => {
   beforeAll(async () => {
     // Create a new customer to test against.
     const ts = new Date().getTime();
-    const doc = { name: "Alice", email: `alice+${ts}@fauna.com` };
+    const doc = {
+      name: "Alice",
+      email: `alice+${ts}@fauna.com`,
+      address: mockAddr(),
+    };
     const res = await faunaClient.query<Customer>(fql`Customer.create(${doc})`);
     alice = res.data;
   });
@@ -40,7 +45,11 @@ describe("Customer endpoints", () => {
       const ts = new Date().getTime();
       const res = await req(app)
         .post("/customers")
-        .send({ name: "Bob", email: `bob+${ts}@fauna.com` });
+        .send({
+          name: "Bob",
+          email: `bob+${ts}@fauna.com`,
+          address: mockAddr(),
+        });
       expect(res.status).toEqual(201);
       expect(res.body.name).toEqual("Bob");
       expect(res.body.email).toEqual(`bob+${ts}@fauna.com`);
@@ -49,7 +58,7 @@ describe("Customer endpoints", () => {
     it("returns a 409 if the customer already exists", async () => {
       const res = await req(app)
         .post("/customers")
-        .send({ name: "Not Alice", email: alice.email });
+        .send({ name: "Not Alice", email: alice.email, address: mockAddr() });
       expect(res.status).toEqual(409);
       expect(res.body.reason).toEqual(
         "A customer with that email already exists."

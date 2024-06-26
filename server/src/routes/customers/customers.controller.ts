@@ -1,6 +1,6 @@
 import { NullDocument, ServiceError } from "fauna";
 import { Request, Response, Router } from "express";
-import { getCustomer, createCustomer, fetchCreateCustomerCart } from "./customer.service";
+import { getCustomer, createCustomer, fetchCreateCustomerCart } from "./customers.service";
 
 const router = Router();
 
@@ -41,8 +41,8 @@ router.get("/customers/:id", async (req: Request, res: Response) => {
  */
 router.post("/customers", async (req: Request, res: Response) => {
   try {
-    const { name, email } = req.body;
-    const { data: customer } = await createCustomer({ name, email });
+    const { name, email, address } = req.body;
+    const { data: customer } = await createCustomer({ name, email, address });
 
     return res.status(201).send({ name: customer.name, email: customer.email });
   } catch (error) {
