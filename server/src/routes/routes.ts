@@ -1,6 +1,9 @@
 import { Router } from "express";
-import customersController from "./customers/customers.controller";
+import customers from "./customers/customers.controller";
+import products from "./products/products.controller";
 
-const api = Router().use(customersController);
+const api = Router()
+  .use(customers)
+  .use(products);
 
 export default Router().use("/", api);
