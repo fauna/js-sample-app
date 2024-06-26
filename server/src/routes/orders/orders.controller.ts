@@ -39,7 +39,7 @@ router.post("/customers/:id/cart/item", async (req: Request, res: Response) => {
     }
 
     return res.status(500).send({
-      reason: "An error occurred while trying to update the cart.",
+      reason: "The request failed unexpectedly.",
     });
   }
 });
