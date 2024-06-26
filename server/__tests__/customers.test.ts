@@ -65,4 +65,24 @@ describe("Customer endpoints", () => {
       );
     });
   });
+
+  describe("POST /customers/:id/cart", () => {
+    it("returns a 200 if the cart is created or returned successfully", async () => {
+      const res = await req(app)
+        .post(`/customers/${alice.id}/cart`)
+        .send({});
+      expect(res.status).toEqual(200);
+      expect(res.body.data.id).toBeDefined();
+      expect(res.body.data.status).toEqual("cart");
+      expect(res.body.data.createdAt).toBeDefined();
+      expect(res.body.data.total).toEqual(0);
+    });
+
+    it("returns a 404 if the customer does not exist", async () => {
+      const res = await req(app).post("/customers/1234/cart");
+      expect(res.status).toEqual(404);
+      expect(res.body.reason).toEqual("No customer with id '1234'");
+    });
+  });
+
 });

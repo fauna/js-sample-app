@@ -1,4 +1,5 @@
-import { NullDocument, ServiceError } from "fauna";
+import { NullDocument, ServiceError, fql } from "fauna";
+import { faunaClient } from "../../fauna/fauna-client";
 import { Request, Response, Router } from "express";
 import { getCustomer, createCustomer } from "./customers.service";
 
@@ -57,6 +58,29 @@ router.post("/customers", async (req: Request, res: Response) => {
     }
 
     return res.status(500).send({ reason: "The request failed unexpectedly." });
+  }
+});
+
+/**
+ * Create or Return Cart
+ * @route {POST} /customer/:id/cart
+ * @param id string
+ * @returns Cart
+ */
+router.post("/customers/:id/cart", async (req: Request, res: Response) => {
+  const { id } = req.params;
+  try {
+    const { data } = await faunaClient.query(fql`fetchOrCreateCustomerCart(${id})`);
+    return res.status(200).send({ data });
+  } catch (error: any) {
+    console.log(error);
+    // If the customer does not exist, return a 404.
+    if (error.code == "document_not_found") {
+      return res
+        .status(404)
+        .send({ reason: `No customer with id '${id}'` });
+    }
+    return res.status(500).send({ reason: "The request failed", error });
   }
 });
 
