@@ -67,7 +67,7 @@ collection Order {
   }))
   payment: { *: Any }
 
-  check singleItemInCart (order => {
+  check oneOrderInCart (order => {
     Order.byCustomerAndStatus(order.customer, "cart").count() <= 1
   })
 
