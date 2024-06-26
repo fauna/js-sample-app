@@ -1,6 +1,7 @@
-import { NullDocument, ServiceError } from "fauna";
+import { NullDocument, ServiceError, fql } from "fauna";
+import { faunaClient } from "../../fauna/fauna-client";
 import { Request, Response, Router } from "express";
-import { getCustomer, createCustomer, fetchCreateCustomerCart } from "./customers.service";
+import { getCustomer, createCustomer } from "./customers.service";
 
 const router = Router();
 
@@ -69,7 +70,7 @@ router.post("/customers", async (req: Request, res: Response) => {
 router.post("/customers/:id/cart", async (req: Request, res: Response) => {
   const { id } = req.params;
   try {
-    const { data } = await fetchCreateCustomerCart(id);
+    const { data } = await faunaClient.query(fql`fetchOrCreateCustomerCart(${id})`);
     return res.status(200).send({ data });
   } catch (error: any) {
     console.log(error);
