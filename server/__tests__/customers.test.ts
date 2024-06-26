@@ -5,7 +5,7 @@ import { mockAddr } from "./mocks";
 import { faunaClient } from "../src/fauna/fauna-client";
 import { Customer } from "../src/routes/customers/customers.model";
 
-describe("Customer endpoints", () => {
+describe("Customers", () => {
   let alice: Customer;
 
   beforeAll(async () => {

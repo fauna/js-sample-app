@@ -95,6 +95,10 @@ collection OrderItem {
     terms [.order]
     values [.product, .quantity]
   }
+
+  index byOrderAndProduct {
+    terms [.order, .product]
+  }
 }
 
 function fetchOrCreateCustomerCart(id) {
