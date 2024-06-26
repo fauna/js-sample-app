@@ -97,7 +97,6 @@ collection OrderItem {
   }
 }
 
-@role("server")
 function fetchOrCreateCustomerCart(id) {
   let customer = Customer.byId(id)
   if (customer == null) {
