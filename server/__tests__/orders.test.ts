@@ -31,7 +31,7 @@ describe("Orders", () => {
       });
     });
 
-    it("returns an error if the customer does not exist", async () => {
+    it("returns a 400 if the customer does not exist", async () => {
       const res = await req(app)
         .post("/customers/1234/cart/item")
         .send({ productName: product.name, quantity: 1 });
@@ -41,7 +41,7 @@ describe("Orders", () => {
       });
     });
 
-    it("returns an error if the product does not exist", async () => {
+    it("returns a 400 if the product does not exist", async () => {
       const res = await req(app)
         .post(`/customers/${customer.id}/cart/item`)
         .send({ productName: "Bogus Product", quantity: 10 });
@@ -51,7 +51,7 @@ describe("Orders", () => {
       });
     });
 
-    it("return an error if the quantity is invalid", async () => {
+    it("return a 400 if the quantity is invalid", async () => {
       const res = await req(app)
         .post(`/customers/${customer.id}/cart/item`)
         .send({ productName: product.name, quantity: -1 });
@@ -61,10 +61,10 @@ describe("Orders", () => {
       });
     });
 
-    it("returns an error if the product is out of stock", async () => {
+    it("returns a 400 if the product is out of stock", async () => {
       const res = await req(app)
         .post(`/customers/${customer.id}/cart/item`)
-        .send({ productName: product.name, quantity: 10000 });
+        .send({ productName: product.name, quantity: 100000 });
       expect(res.status).toEqual(400);
       expect(res.body).toEqual({
         reason: "Product does not have the requested quantity in stock.",
