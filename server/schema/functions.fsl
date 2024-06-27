@@ -1,0 +1,51 @@
+function updateCartItem(customerId, productName, quantity) {
+  let customer = Customer.byId(customerId)
+  // There is a unique constraint on [.name] so this will return at most one result.
+  let product = Product.byName(productName).first()
+
+  // Check if the customer exists.
+  if (customer == null) {
+    abort("Customer does not exist.")
+  }
+
+  // Check if the product exists.
+  if (product == null) {
+    abort("Product does not exist.")
+  }
+
+  // Check that the quantity is valid.
+  if (quantity < 0) {
+    abort("Quantity must be a non-negative integer.")
+  }
+
+  // Create a new cart for the customer if they do not have one.
+  if (customer!.cart == null) {
+    Order.create({
+      status: "cart",
+      customer: customer,
+      createdAt: Time.now(),
+      payment: {}
+    })
+  }
+
+  // Check that the product has the requested quantity in stock.
+  if (product!.stock < quantity) {
+    abort("Product does not have the requested quantity in stock.")
+  }
+
+  // Attempt to find an existing order item for the order, product pair.
+  // There is a unique constraint on [.order, .product] so this will return at most one result.
+  let orderItem = OrderItem.byOrderAndProduct(customer!.cart, product).first()
+
+  if (orderItem == null) {
+    // If the order item does not exist, create a new one.
+    OrderItem.create({
+      order: Order(customer!.cart!.id),
+      product: product,
+      quantity: quantity,
+    })
+  } else {
+    // If the order item exists, update the quantity.
+    orderItem!.update({ quantity: quantity })
+  }
+}

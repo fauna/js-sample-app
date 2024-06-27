@@ -37,6 +37,10 @@ collection Product {
   index byCategory {
     terms [.category]
   }
+
+  index byName {
+    terms [.name]
+  }
 }
 
 collection Category {
@@ -94,6 +98,10 @@ collection OrderItem {
   index byOrder {
     terms [.order]
     values [.product, .quantity]
+  }
+
+  index byOrderAndProduct {
+    terms [.order, .product]
   }
 }
 
