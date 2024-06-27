@@ -1,4 +1,4 @@
-import { fql, QueryValue, AbortError } from "fauna";
+import { fql, AbortError, type DocumentT, type Page } from "fauna";
 import { Request, Response, Router } from "express";
 import { faunaClient } from "../../fauna/fauna-client";
 import { Order, OrderItem } from "./orders.model";
@@ -14,7 +14,9 @@ const router = Router();
 router.post("/customers/:id/cart", async (req: Request, res: Response) => {
   const { id } = req.params;
   try {
-    const { data: cart } = await faunaClient.query(fql`getOrCreateCart(${id})`);
+    const { data: cart } = await faunaClient.query<DocumentT<Order>>(
+      fql`getOrCreateCart(${id})`
+    );
 
     return res.status(200).send(cart);
   } catch (error: any) {
@@ -41,7 +43,7 @@ router.post("/customers/:id/cart", async (req: Request, res: Response) => {
  */
 router.post("/customers/:id/orders", async (req: Request, res: Response) => {
   const { id: customerId } = req.params;
-  const { nextToken, pageSize } = req.body;
+  const { nextToken = undefined, pageSize = 10 } = req.body;
 
   const q = fql`
     let customer = Customer.byId(${customerId})
@@ -51,18 +53,20 @@ router.post("/customers/:id/orders", async (req: Request, res: Response) => {
   const qPage = fql`Set.paginate(${nextToken})`;
 
   try {
-    const { data } = await faunaClient.query(nextToken ? qPage : q);
+    const { data: page } = await faunaClient.query<Page<DocumentT<Order>>>(
+      nextToken ? qPage : q
+    );
 
-    return res.status(200).send(data);
+    return res.status(200).send({ results: page.data, nextToken: page.after });
   } catch (error: any) {
     // Handle any abort conditions we defined in the UDF.
     if (error instanceof AbortError) {
       return res.status(400).send({ reason: error.abort });
     }
 
-    return res.status(500).send({
-      reason: "The request failed unexpectedly.",
-    });
+    return res
+      .status(500)
+      .send({ reason: "The request failed unexpectedly.", error });
   }
 });
 
@@ -85,7 +89,7 @@ router.post("/customers/:id/cart/item", async (req: Request, res: Response) => {
   }
 
   try {
-    const { data: cartItem } = await faunaClient.query(
+    const { data: cartItem } = await faunaClient.query<DocumentT<OrderItem>>(
       fql`createOrUpdateCartItem(${customerId}, ${productName}, ${quantity})`
     );
 
@@ -115,8 +119,9 @@ router.post("/customers/:id/cart/item", async (req: Request, res: Response) => {
  */
 router.get("/customers/:id/cart", async (req: Request, res: Response) => {
   const { id } = req.params;
+
   try {
-    const { data } = await faunaClient.query<QueryValue>(fql`
+    const { data } = await faunaClient.query<DocumentT<Order>>(fql`
       let customer = Customer.byId(${id})
 
       if (customer == null) {
@@ -132,10 +137,14 @@ router.get("/customers/:id/cart", async (req: Request, res: Response) => {
     `);
     return res.status(200).send({ data });
   } catch (error: any) {
+    // Handle any abort conditions we defined in the UDF.
     if (error instanceof AbortError) {
       return res.status(400).send({ reason: error?.abort });
     }
-    return res.status(500).send({ reason: "The request failed", error });
+
+    return res
+      .status(500)
+      .send({ reason: "The request failed unexpectedly.", error });
   }
 });
 

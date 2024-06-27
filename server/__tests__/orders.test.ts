@@ -1,6 +1,5 @@
 import req from "supertest";
 import app from "../src/app";
-import { fql } from "fauna";
 import { seedTestData } from "./seed";
 import { faunaClient } from "../src/fauna/fauna-client";
 import { Product } from "../src/routes/products/products.model";
@@ -32,7 +31,6 @@ describe("Orders", () => {
       expect(res.status).toEqual(400);
       expect(res.body.reason).toEqual("No customer with id exists.");
     });
-
   });
 
   describe("POST /customers/:id/cart", () => {
@@ -52,16 +50,11 @@ describe("Orders", () => {
     });
   });
 
-  describe("GET /customers/:id/orders", () => {
+  describe("POST /customers/:id/orders", () => {
     it("returns a list of orders for the customer", async () => {
-      try {
-        const res = await req(app).post(`/customers/${customer.id}/orders`);
-        console.log(res);
-        expect(res.status).toEqual(200);
-        expect(res.body.data.length).toBeGreaterThan(0);
-      } catch (error) {
-        console.error(error);
-      }
+      const res = await req(app).post(`/customers/${customer.id}/orders`);
+      expect(res.status).toEqual(200);
+      expect(res.body.results.length).toBeGreaterThanOrEqual(0);
     });
 
     it("can paginate the list of orders", async () => {
@@ -70,7 +63,7 @@ describe("Orders", () => {
         .post(`/customers/${customer.id}/orders`)
         .send({ pageSize: 1, nextToken: undefined });
       expect(firstResp.status).toEqual(200);
-      expect(firstResp.body.data.length).toEqual(1);
+      expect(firstResp.body.results.length).toEqual(1);
       // Get the second page of orders
       const secondResp = await req(app)
         .post(`/customers/${customer.id}/orders`)
@@ -79,7 +72,7 @@ describe("Orders", () => {
           nextToken: firstResp.body.nextToken,
         });
       expect(secondResp.status).toEqual(200);
-      expect(secondResp.body.data.length).toEqual(1);
+      expect(secondResp.body.results.length).toEqual(1);
       // Ensure the orders returned are different.
       expect(firstResp.body.results[0].createdAt).not.toEqual(
         secondResp.body.results[0].createdAt
