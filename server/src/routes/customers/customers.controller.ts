@@ -6,8 +6,8 @@ import { Customer } from "./customers.model";
 const router = Router();
 
 /**
- * Get a customer
- * @route {GET} /customer/:id
+ * Get a customer.
+ * @route {GET} /customers/:id
  * @param id string
  * @returns Customer
  */
@@ -31,13 +31,15 @@ router.get("/customers/:id", async (req: Request, res: Response) => {
       orders: customer.orders,
     });
   } catch (error: any) {
-    return res.status(500).send({ reason: "The request failed unexpectedly." });
+    return res
+      .status(500)
+      .send({ reason: "The request failed unexpectedly.", error });
   }
 });
 
 /**
- * Create a customer
- * @route {POST} /customer
+ * Create a customer.
+ * @route {POST} /customers
  * @bodyparam name
  * @bodyparam email
  * @returns Customer
@@ -61,7 +63,9 @@ router.post("/customers", async (req: Request, res: Response) => {
       }
     }
 
-    return res.status(500).send({ reason: "The request failed unexpectedly." });
+    return res
+      .status(500)
+      .send({ reason: "The request failed unexpectedly.", error });
   }
 });
 

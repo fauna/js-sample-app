@@ -24,7 +24,9 @@ router.post("/customers/:id/cart", async (req: Request, res: Response) => {
       });
     }
 
-    return res.status(500).send({ reason: "The request failed", error });
+    return res
+      .status(500)
+      .send({ reason: "The request failed unexpectedly.", error });
   }
 });
 
@@ -62,9 +64,9 @@ router.post("/customers/:id/cart/item", async (req: Request, res: Response) => {
       });
     }
 
-    return res.status(500).send({
-      reason: "The request failed unexpectedly.",
-    });
+    return res
+      .status(500)
+      .send({ reason: "The request failed unexpectedly.", error });
   }
 });
 
