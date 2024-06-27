@@ -22,20 +22,18 @@ describe("Orders", () => {
 
   describe("POST /customers/:id/cart", () => {
     it("returns a 200 if the cart is created or returned successfully", async () => {
-      const res = await req(app)
-        .post(`/customers/${customer.id}/cart`)
-        .send({});
+      const res = await req(app).post(`/customers/${customer.id}/cart`);
       expect(res.status).toEqual(200);
-      expect(res.body.data.id).toBeDefined();
-      expect(res.body.data.status).toEqual("cart");
-      expect(res.body.data.createdAt).toBeDefined();
-      expect(res.body.data.total).toEqual(0);
+      expect(res.body.id).toBeDefined();
+      expect(res.body.status).toEqual("cart");
+      expect(res.body.createdAt).toBeDefined();
+      expect(res.body.total).toEqual(0);
     });
 
     it("returns a 400 if the customer does not exist", async () => {
       const res = await req(app).post("/customers/1234/cart");
       expect(res.status).toEqual(400);
-      expect(res.body.reason).toEqual("No customer with id '1234'");
+      expect(res.body.reason).toEqual("Customer does not exist.");
     });
   });
 

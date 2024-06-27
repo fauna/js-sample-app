@@ -1,7 +1,6 @@
-import { fql } from "fauna";
 import req from "supertest";
 import app from "../src/app";
-import { mockAddr } from "./mocks";
+import { mockCustomer } from "./mocks";
 import { seedTestData } from "./seed";
 import { faunaClient } from "../src/fauna/fauna-client";
 import { Customer } from "../src/routes/customers/customers.model";
@@ -37,24 +36,16 @@ describe("Customers", () => {
   describe("POST /customers", () => {
     it("returns a 201 if the customer is created successfully", async () => {
       const ts = new Date().getTime();
-      const res = await req(app)
-        .post("/customers")
-        .send({
-          name: "Bob",
-          email: `bob+${ts}@fauna.com`,
-          address: mockAddr(),
-        });
+      const res = await req(app).post("/customers").send(mockCustomer());
       expect(res.status).toEqual(201);
       expect(res.body.name).toEqual("Bob");
       expect(res.body.email).toEqual(`bob+${ts}@fauna.com`);
     });
 
     it("returns a 409 if the customer already exists", async () => {
-      const res = await req(app).post("/customers").send({
-        name: "Not Alice",
-        email: customer.email,
-        address: mockAddr(),
-      });
+      const res = await req(app)
+        .post("/customers")
+        .send(mockCustomer({ email: customer.email }));
       expect(res.status).toEqual(409);
       expect(res.body.reason).toEqual(
         "A customer with that email already exists."
