@@ -5,7 +5,7 @@ import { Product } from "../src/routes/products/products.model";
 import { Category } from "../src/routes/products/products.model";
 import { Customer } from "../src/routes/customers/customers.model";
 
-export const seedTestData = async () => {
+export const seedTestData = async (opts?: { numOrders: number }) => {
   // Create a customer to test against.
   const customer = (
     await faunaClient.query<Customer>(fql`Customer.create(${mockCustomer()})`)
@@ -32,6 +32,18 @@ export const seedTestData = async () => {
       `
     )
   ).data;
+
+  // Create a few orders for the customer.
+  const numOrders = opts?.numOrders || 1;
+  for (let i = 0; i < numOrders; i++) {
+    await faunaClient.query(fql`
+        Order.create({
+          createdAt: Time.now(),
+          status: "delivered",
+          customer: Customer.byId(${customer.id}),
+        })
+      `);
+  }
 
   return { product, category, customer };
 };

@@ -31,6 +31,41 @@ router.post("/customers/:id/cart", async (req: Request, res: Response) => {
 });
 
 /**
+ * Get a customer's orders
+ * @route {GET} /customers/:id/orders
+ * @param id string
+ * @returns Order[]
+ */
+router.get("/customers/:id/orders", async (req: Request, res: Response) => {
+  const { after } = req.query;
+  const { id: customerId } = req.params;
+
+  try {
+    const q = fql`
+      let customer = Customer.byId(${customerId})
+      if (customer == null) {
+        abort("Customer does not exist.")
+      }
+      Order.byCustomer(customer)
+    `;
+    const p = fql`Set.paginate(${after})`;
+
+    const { data: orders } = faunaClient.query(after ? p : q);
+
+    return res.status(200).send(orders);
+  } catch (error: any) {
+    // Handle any abort conditions we defined in the UDF.
+    if (error.abort) {
+      return res.status(400).send({ reason: error.abort });
+    }
+
+    return res.status(500).send({
+      reason: "The request failed unexpectedly.",
+    });
+  }
+});
+
+/**
  * Add an item to a customer's cart. Update the quantity if it already exists.
  * @route {POST} /customers/:id/cart/item
  * @param id string

@@ -1,5 +1,6 @@
 import req from "supertest";
 import app from "../src/app";
+import { fql } from "fauna";
 import { seedTestData } from "./seed";
 import { faunaClient } from "../src/fauna/fauna-client";
 import { Product } from "../src/routes/products/products.model";
@@ -10,7 +11,7 @@ describe("Orders", () => {
   let customer: Customer;
 
   beforeAll(async () => {
-    const { product: p, customer: c } = await seedTestData();
+    const { product: p, customer: c } = await seedTestData({ numOrders: 5 });
     product = p;
     customer = c;
   });
@@ -48,6 +49,28 @@ describe("Orders", () => {
       const res = await req(app).post("/customers/1234/cart");
       expect(res.status).toEqual(400);
       expect(res.body.reason).toEqual("Customer does not exist.");
+    });
+  });
+
+  describe("GET /customers/:id/orders", () => {
+    it("returns a list of orders for the customer", async () => {
+      const res = await req(app).get(`/customers/${customer.id}/orders`);
+      expect(res.status).toEqual(200);
+      expect(res.body.data.length).toBeGreaterThan(0);
+    });
+
+    it("can paginate the list of orders", async () => {
+      const res = await req(app).get(`/customers/${customer.id}/orders?size=1`);
+      expect(res.status).toEqual(200);
+      expect(res.body.data.length).toEqual(1);
+    });
+
+    it("returns a 400 if the customer does not exist", async () => {
+      const res = await req(app).get("/customers/1234/orders");
+      expect(res.status).toEqual(400);
+      expect(res.body).toEqual({
+        reason: "Customer does not exist.",
+      });
     });
   });
 
