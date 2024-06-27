@@ -4,7 +4,7 @@ import { Request, Response, Router } from "express";
 import { Customer } from "./customers.model";
 
 const router = Router();
-const toOutputModel = (customer: DocumentT<Customer>) => {
+const docToCustomer = (customer: DocumentT<Customer>): Customer => {
   const { id, name, email, cart, address, orders } = customer;
   return { id, name, email, cart, address, orders };
 };
@@ -30,7 +30,7 @@ router.get("/customers/:id", async (req: Request, res: Response) => {
         .send({ reason: `No customer with id '${id}' exists.` });
     }
 
-    return res.status(200).send(toOutputModel(customer));
+    return res.status(200).send(docToCustomer(customer));
   } catch (error: any) {
     return res
       .status(500)
@@ -53,7 +53,7 @@ router.post("/customers", async (req: Request, res: Response) => {
       fql`Customer.create(${{ name, email, address }})`
     );
 
-    return res.status(201).send(toOutputModel(customer));
+    return res.status(201).send(docToCustomer(customer));
   } catch (error: any) {
     // Handle errors returned by Fauna here.
     if (error instanceof ServiceError) {
@@ -89,7 +89,7 @@ router.patch("/customers/:id", async (req: Request, res: Response) => {
       fql`Customer.byId(${id})!.update(${{ name, email, address }})`
     );
 
-    return res.status(200).send(toOutputModel(customer));
+    return res.status(200).send(docToCustomer(customer));
   } catch (error: any) {
     // Handle errors returned by Fauna here.
     if (error instanceof ServiceError) {
