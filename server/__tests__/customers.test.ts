@@ -89,7 +89,7 @@ describe("Customer endpoints", () => {
     it("returns a 200 if the cart is retrieved successfully", async () => {
       const res = await req(app).get(`/customers/${alice.id}/cart`);
       expect(res.status).toEqual(200);
-      expect(res.body.data.id).toBeDefined();
+      expect(res.body.data.items.data).toEqual([]);
       expect(res.body.data.status).toEqual("cart");
       expect(res.body.data.createdAt).toBeDefined();
     });
