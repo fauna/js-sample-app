@@ -14,7 +14,7 @@ export const mockAddr = (overrides?: {
   };
 };
 
-export const mockUser = (overrides?: {
+export const mockCustomer = (overrides?: {
   name?: string;
   email?: string;
   address?: {

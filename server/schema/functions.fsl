@@ -1,4 +1,4 @@
-function updateCartItem(customerId, productName, quantity) {
+function createOrUpdateCartItem(customerId, productName, quantity) {
   let customer = Customer.byId(customerId)
   // There is a unique constraint on [.name] so this will return at most one result.
   let product = Product.byName(productName).first()
@@ -47,5 +47,40 @@ function updateCartItem(customerId, productName, quantity) {
   } else {
     // If the order item exists, update the quantity.
     orderItem!.update({ quantity: quantity })
+  }
+}
+
+function getOrCreateCart(id) {
+  let customer = Customer.byId(id)
+
+  // Check if the customer exists.
+  if (customer == null) {
+    abort("Customer does not exist.")
+  }
+
+  if (customer!.cart == null) {
+    // Create a cart if the customer does not have one
+    Order.create({
+      status: 'cart',
+      customer: Customer.byId(id),
+      createdAt: Time.now(),
+      payment: {}
+    }) {
+      id,
+      status,
+      createdAt,
+      payment,
+      items,
+      total
+    }
+  } else {
+    customer!.cart {
+      id,
+      status,
+      createdAt,
+      payment,
+      items,
+      total
+    }
   }
 }

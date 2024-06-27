@@ -5,7 +5,33 @@ import { faunaClient } from "../../fauna/fauna-client";
 const router = Router();
 
 /**
- * Post Cart Item
+ * Get a customer's cart. Create one if it does not exist.
+ * @route {POST} /customer/:id/cart
+ * @param id string
+ * @returns Order
+ */
+router.post("/customers/:id/cart", async (req: Request, res: Response) => {
+  const { id } = req.params;
+  try {
+    const { data: cart } = await faunaClient.query(fql`getOrCreateCart(${id})`);
+
+    return res.status(200).send(cart);
+  } catch (error: any) {
+    // We abort our UDF if the customer does not exist.
+    if (error.abort) {
+      return res.status(400).send({
+        reason: error.abort,
+      });
+    }
+
+    return res
+      .status(500)
+      .send({ reason: "The request failed unexpectedly.", error });
+  }
+});
+
+/**
+ * Add an item to a customer's cart. Update the quantity if it already exists.
  * @route {POST} /customers/:id/cart/item
  * @param id string
  * @bodyparam productName
@@ -24,7 +50,7 @@ router.post("/customers/:id/cart/item", async (req: Request, res: Response) => {
 
   try {
     const { data: cartItem } = await faunaClient.query(
-      fql`updateCartItem(${customerId}, ${productName}, ${quantity})`
+      fql`createOrUpdateCartItem(${customerId}, ${productName}, ${quantity})`
     );
 
     // TODO: we will need to strip out internal fields from the response.
@@ -38,9 +64,9 @@ router.post("/customers/:id/cart/item", async (req: Request, res: Response) => {
       });
     }
 
-    return res.status(500).send({
-      reason: "The request failed unexpectedly.",
-    });
+    return res
+      .status(500)
+      .send({ reason: "The request failed unexpectedly.", error });
   }
 });
 

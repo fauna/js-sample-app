@@ -1,5 +1,5 @@
 import { fql } from "fauna";
-import { mockUser, mockProduct, mockCategory } from "./mocks";
+import { mockCustomer, mockProduct, mockCategory } from "./mocks";
 import { faunaClient } from "../src/fauna/fauna-client";
 import { Product } from "../src/routes/products/products.model";
 import { Category } from "../src/routes/products/products.model";
@@ -8,7 +8,7 @@ import { Customer } from "../src/routes/customers/customers.model";
 export const seedTestData = async () => {
   // Create a customer to test against.
   const customer = (
-    await faunaClient.query<Customer>(fql`Customer.create(${mockUser()})`)
+    await faunaClient.query<Customer>(fql`Customer.create(${mockCustomer()})`)
   ).data;
 
   // Create a category to test against

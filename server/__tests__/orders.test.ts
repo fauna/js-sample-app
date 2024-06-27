@@ -20,6 +20,23 @@ describe("Orders", () => {
     faunaClient.close();
   });
 
+  describe("POST /customers/:id/cart", () => {
+    it("returns a 200 if the cart is created or returned successfully", async () => {
+      const res = await req(app).post(`/customers/${customer.id}/cart`);
+      expect(res.status).toEqual(200);
+      expect(res.body.id).toBeDefined();
+      expect(res.body.status).toEqual("cart");
+      expect(res.body.createdAt).toBeDefined();
+      expect(res.body.total).toEqual(0);
+    });
+
+    it("returns a 400 if the customer does not exist", async () => {
+      const res = await req(app).post("/customers/1234/cart");
+      expect(res.status).toEqual(400);
+      expect(res.body.reason).toEqual("Customer does not exist.");
+    });
+  });
+
   describe("POST /customers/:id/cart/item", () => {
     [{}, { productName: "Lava Lamp" }, { quantity: 10 }].forEach((payload) => {
       it(`returns a 400 if it receives and invalid payload: ${payload}`, async () => {
