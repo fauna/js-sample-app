@@ -1,9 +1,13 @@
-import { fql, NullDocument, ServiceError } from "fauna";
+import { fql, NullDocument, ServiceError, type DocumentT } from "fauna";
 import { faunaClient } from "../../fauna/fauna-client";
 import { Request, Response, Router } from "express";
 import { Customer } from "./customers.model";
 
 const router = Router();
+const docToCustomer = (customer: DocumentT<Customer>): Customer => {
+  const { id, name, email, cart, address, orders } = customer;
+  return { id, name, email, cart, address, orders };
+};
 
 /**
  * Get a customer.
@@ -26,11 +30,7 @@ router.get("/customers/:id", async (req: Request, res: Response) => {
         .send({ reason: `No customer with id '${id}' exists.` });
     }
 
-    return res.status(200).send({
-      name: customer.name,
-      email: customer.email,
-      orders: customer.orders,
-    });
+    return res.status(200).send(docToCustomer(customer));
   } catch (error: any) {
     return res
       .status(500)
@@ -53,11 +53,53 @@ router.post("/customers", async (req: Request, res: Response) => {
       fql`Customer.create(${{ name, email, address }})`
     );
 
-    return res.status(201).send({ name: customer.name, email: customer.email });
+    return res.status(201).send(docToCustomer(customer));
   } catch (error: any) {
     // Handle errors returned by Fauna here.
     if (error instanceof ServiceError) {
       // We have a single unique constraint on the email field.
+      if (error.code === "constraint_failure") {
+        return res
+          .status(409)
+          .send({ reason: "A customer with that email already exists." });
+      }
+    }
+
+    return res
+      .status(500)
+      .send({ reason: "The request failed unexpectedly.", error });
+  }
+});
+
+/**
+ * Update a customer.
+ * @route {PATCH} /customers/:id
+ * @param id string
+ * @bodyparam name
+ * @bodyparam email
+ * @bodyparam address
+ * @returns Customer
+ */
+router.patch("/customers/:id", async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const { name, email, address } = req.body;
+
+  try {
+    const { data: customer } = await faunaClient.query<DocumentT<Customer>>(
+      fql`Customer.byId(${id})!.update(${{ name, email, address }})`
+    );
+
+    return res.status(200).send(docToCustomer(customer));
+  } catch (error: any) {
+    // Handle errors returned by Fauna here.
+    if (error instanceof ServiceError) {
+      // If the customer does not exist, return a 404.
+      if (error.code === "document_not_found") {
+        return res
+          .status(404)
+          .send({ reason: `No customer with id '${id}' exists.` });
+      }
+      // If there is already a customer with that email, return a 409.
       if (error.code === "constraint_failure") {
         return res
           .status(409)
