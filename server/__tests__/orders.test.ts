@@ -26,10 +26,10 @@ describe("Orders", () => {
       expect(res.status).toEqual(200);
     });
 
-    it("returns a 404 if the customer does not exist", async () => {
+    it("returns a 400 if the customer does not exist", async () => {
       const res = await req(app).get("/customers/1234/cart");
-      expect(res.status).toEqual(404);
-      expect(res.body.reason).toEqual("No customer with id '1234'");
+      expect(res.status).toEqual(400);
+      expect(res.body.reason).toEqual("No customer with id exists.");
     });
 
   });
