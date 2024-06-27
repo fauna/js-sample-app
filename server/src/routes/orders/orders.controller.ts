@@ -5,7 +5,7 @@ import { faunaClient } from "../../fauna/fauna-client";
 const router = Router();
 
 /**
- * Create or return a customer's cart
+ * Get a customer's cart. Create one if it does not exist.
  * @route {POST} /customer/:id/cart
  * @param id string
  * @returns Order
@@ -13,7 +13,7 @@ const router = Router();
 router.post("/customers/:id/cart", async (req: Request, res: Response) => {
   const { id } = req.params;
   try {
-    const { data: cart } = await faunaClient.query(fql`createCart(${id})`);
+    const { data: cart } = await faunaClient.query(fql`getOrCreateCart(${id})`);
 
     return res.status(200).send(cart);
   } catch (error: any) {
@@ -29,7 +29,7 @@ router.post("/customers/:id/cart", async (req: Request, res: Response) => {
 });
 
 /**
- * Update a customer's cart
+ * Add an item to a customer's cart. Update the quantity if it already exists.
  * @route {POST} /customers/:id/cart/item
  * @param id string
  * @bodyparam productName
@@ -48,7 +48,7 @@ router.post("/customers/:id/cart/item", async (req: Request, res: Response) => {
 
   try {
     const { data: cartItem } = await faunaClient.query(
-      fql`updateCartItem(${customerId}, ${productName}, ${quantity})`
+      fql`createOrUpdateCartItem(${customerId}, ${productName}, ${quantity})`
     );
 
     // TODO: we will need to strip out internal fields from the response.
