@@ -1,6 +1,7 @@
 import { fql, QueryValue, AbortError } from "fauna";
 import { Request, Response, Router } from "express";
 import { faunaClient } from "../../fauna/fauna-client";
+import { Order, OrderItem } from "./orders.model";
 
 const router = Router();
 
@@ -18,7 +19,7 @@ router.post("/customers/:id/cart", async (req: Request, res: Response) => {
     return res.status(200).send(cart);
   } catch (error: any) {
     // We abort our UDF if the customer does not exist.
-    if (error.abort) {
+    if (error instanceof AbortError) {
       return res.status(400).send({
         reason: error.abort,
       });
@@ -31,31 +32,31 @@ router.post("/customers/:id/cart", async (req: Request, res: Response) => {
 });
 
 /**
- * Get a customer's orders
- * @route {GET} /customers/:id/orders
+ * Get a customer's orders.
+ * @route {POST} /customers/:id/orders
  * @param id string
+ * @bodyparam pageSize
+ * @bodyparam nextToken
  * @returns Order[]
  */
-router.get("/customers/:id/orders", async (req: Request, res: Response) => {
-  const { after } = req.query;
+router.post("/customers/:id/orders", async (req: Request, res: Response) => {
   const { id: customerId } = req.params;
+  const { nextToken, pageSize } = req.body;
+
+  const q = fql`
+    let customer = Customer.byId(${customerId})
+    if (customer == null) abort("Customer does not exist.")
+    Order.byCustomer(customer).pageSize(${pageSize})
+  `;
+  const qPage = fql`Set.paginate(${nextToken})`;
 
   try {
-    const q = fql`
-      let customer = Customer.byId(${customerId})
-      if (customer == null) {
-        abort("Customer does not exist.")
-      }
-      Order.byCustomer(customer)
-    `;
-    const p = fql`Set.paginate(${after})`;
+    const { data } = await faunaClient.query(nextToken ? qPage : q);
 
-    const { data: orders } = faunaClient.query(after ? p : q);
-
-    return res.status(200).send(orders);
+    return res.status(200).send(data);
   } catch (error: any) {
     // Handle any abort conditions we defined in the UDF.
-    if (error.abort) {
+    if (error instanceof AbortError) {
       return res.status(400).send({ reason: error.abort });
     }
 
@@ -93,7 +94,7 @@ router.post("/customers/:id/cart/item", async (req: Request, res: Response) => {
   } catch (error: any) {
     // We defined several abort contitions in the updateCartItem UDF.
     // Use them to return appropriate error messages.
-    if (error.abort) {
+    if (error instanceof AbortError) {
       return res.status(400).send({
         reason: error.abort,
       });
@@ -105,14 +106,13 @@ router.post("/customers/:id/cart/item", async (req: Request, res: Response) => {
   }
 });
 
-
 /**
  * Get a customer's cart
  * @route {GET} /customer/:id/cart
  * @param id string
  * @returns Cart
  * @returns 404
-*/
+ */
 router.get("/customers/:id/cart", async (req: Request, res: Response) => {
   const { id } = req.params;
   try {
@@ -133,9 +133,7 @@ router.get("/customers/:id/cart", async (req: Request, res: Response) => {
     return res.status(200).send({ data });
   } catch (error: any) {
     if (error instanceof AbortError) {
-      return res
-        .status(400)
-        .send({ reason: error?.abort });
+      return res.status(400).send({ reason: error?.abort });
     }
     return res.status(500).send({ reason: "The request failed", error });
   }

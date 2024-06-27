@@ -41,6 +41,7 @@ export const seedTestData = async (opts?: { numOrders: number }) => {
           createdAt: Time.now(),
           status: "delivered",
           customer: Customer.byId(${customer.id}),
+          payment: {}
         })
       `);
   }
