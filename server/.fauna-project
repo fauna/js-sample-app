@@ -3,4 +3,4 @@ default=dev
 
 [environment.dev]
 endpoint=cloud-us
-database=E_Commerce
+database=

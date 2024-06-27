@@ -1,3 +1,5 @@
+import { faker } from "@faker-js/faker";
+
 export const mockAddr = (overrides?: {
   street?: string;
   city?: string;
@@ -26,9 +28,10 @@ export const mockCustomer = (overrides?: {
   };
 }) => {
   const ts = new Date().getTime();
+  const fakeName = faker.internet.userName();
   return {
-    name: overrides?.name || "Bob",
-    email: overrides?.email || `bob+${ts}@fauna.com`,
+    name: overrides?.name || fakeName,
+    email: overrides?.email || `${fakeName.toLowerCase()}+${ts}@fauna.com`,
     address: mockAddr(overrides?.address),
   };
 };
