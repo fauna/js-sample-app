@@ -19,7 +19,7 @@ router.get("/customers/:id", async (req: Request, res: Response) => {
   const { id } = req.params;
 
   try {
-    const { data: customer } = await faunaClient.query<Customer>(
+    const { data: customer } = await faunaClient.query<DocumentT<Customer>>(
       fql`Customer.byId(${id})`
     );
 
@@ -49,7 +49,7 @@ router.post("/customers", async (req: Request, res: Response) => {
   const { name, email, address } = req.body;
 
   try {
-    const { data: customer } = await faunaClient.query<Customer>(
+    const { data: customer } = await faunaClient.query<DocumentT<Customer>>(
       fql`Customer.create(${{ name, email, address }})`
     );
 
