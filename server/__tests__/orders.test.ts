@@ -20,6 +20,20 @@ describe("Orders", () => {
     faunaClient.close();
   });
 
+  describe("GET /customers/:id/cart", () => {
+    it("returns a 200 if the cart is retrieved successfully", async () => {
+      const res = await req(app).get(`/customers/${customer.id}/cart`);
+      expect(res.status).toEqual(200);
+    });
+
+    it("returns a 404 if the customer does not exist", async () => {
+      const res = await req(app).get("/customers/1234/cart");
+      expect(res.status).toEqual(404);
+      expect(res.body.reason).toEqual("No customer with id '1234'");
+    });
+
+  });
+
   describe("POST /customers/:id/cart", () => {
     it("returns a 200 if the cart is created or returned successfully", async () => {
       const res = await req(app).post(`/customers/${customer.id}/cart`);
