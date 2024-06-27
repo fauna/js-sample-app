@@ -1,11 +1,12 @@
+import { QueryValueObject } from "fauna";
 import { Order } from "../orders/orders.model";
 
-export interface Customer {
+export interface Customer extends QueryValueObject {
   id: string;
   name: string;
   email: string;
-  cart?: Order;
-  orders: Order[];
+  // cart?: Order;
+  // orders: Order[];
   address: {
     street: string;
     city: string;

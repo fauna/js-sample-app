@@ -2,7 +2,6 @@ import { fql } from "fauna";
 import { mockCustomer, mockProduct, mockCategory } from "./mocks";
 import { faunaClient } from "../src/fauna/fauna-client";
 import { Product } from "../src/routes/products/products.model";
-import { Category } from "../src/routes/products/products.model";
 import { Customer } from "../src/routes/customers/customers.model";
 
 export const seedTestData = async (opts?: { numOrders: number }) => {
@@ -13,7 +12,9 @@ export const seedTestData = async (opts?: { numOrders: number }) => {
 
   // Create a category to test against
   const category = (
-    await faunaClient.query<Category>(fql`Category.create(${mockCategory()})`)
+    await faunaClient.query<{ name: string }>(
+      fql`Category.create(${mockCategory()}) { name }`
+    )
   ).data;
 
   // Create a product to test against.
@@ -21,7 +22,7 @@ export const seedTestData = async (opts?: { numOrders: number }) => {
   const product = (
     await faunaClient.query<Product>(
       fql`
-        let category = Category.byName(${category.name}).first()
+        let category = Category.byName(${category?.name}).first()
         Product.create({
           name: ${mock.name},
           price: ${mock.price},

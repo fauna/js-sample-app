@@ -1,5 +1,6 @@
 import req from "supertest";
 import app from "../src/app";
+import { DocumentT, fql } from "fauna";
 import { mockCustomer } from "./mocks";
 import { seedTestData } from "./seed";
 import { faunaClient } from "../src/fauna/fauna-client";
@@ -46,6 +47,42 @@ describe("Customers", () => {
       const res = await req(app)
         .post("/customers")
         .send(mockCustomer({ email: customer.email }));
+      expect(res.status).toEqual(409);
+      expect(res.body.reason).toEqual(
+        "A customer with that email already exists."
+      );
+    });
+  });
+
+  describe("PATCH /customers/:id", () => {
+    it("returns a 200 if the customer is updated successfully", async () => {
+      const res = await req(app)
+        .patch(`/customers/${customer.id}`)
+        .send({ name: "Alice" });
+      expect(res.status).toEqual(200);
+      expect(res.body.name).toEqual("Alice");
+      // Ensure the email is not changed.
+      expect(res.body.email).toEqual(customer.email);
+    });
+
+    it("returns a 404 if the customer does not exist", async () => {
+      const res = await req(app)
+        .patch("/customers/1234")
+        .send({ name: "Alice" });
+      expect(res.status).toEqual(404);
+      expect(res.body.reason).toEqual("No customer with id '1234' exists.");
+    });
+
+    it("returns a 409 if the email is already in use", async () => {
+      const newCustomer = mockCustomer();
+      // Create a new customer.
+      const { data } = await faunaClient.query<DocumentT<Customer>>(
+        fql`Customer.create(${newCustomer})`
+      );
+      // Try to update the new customer with the email of the existing customer.
+      const res = await req(app)
+        .patch(`/customers/${data.id}`)
+        .send({ email: customer.email });
       expect(res.status).toEqual(409);
       expect(res.body.reason).toEqual(
         "A customer with that email already exists."
