@@ -1,6 +1,8 @@
-import { NullDocument, ServiceError } from "fauna";
+import { NullDocument, ServiceError, fql } from "fauna";
+import { faunaClient } from "../../fauna/fauna-client";
 import { Request, Response, Router } from "express";
-import { getCustomer, createCustomer, getCustomerCart } from "./customers.service";
+import { getCustomer, createCustomer } from "./customers.service";
+import { Customer } from "./customers.model";
 
 const router = Router();
 
@@ -70,7 +72,38 @@ router.post("/customers", async (req: Request, res: Response) => {
 router.get("/customers/:id/cart", async (req: Request, res: Response) => {
   const { id } = req.params;
   try {
-    const { data } = await getCustomerCart(id);
+    const { data } = await faunaClient.query<Customer>(fql`
+      let customer = Customer.byId(${id})
+      customer!.cart {
+        total,
+        status,
+        items,
+        createdAt
+      }
+    `);
+    return res.status(200).send({ data });
+  } catch (error: any) {
+    console.log(error);
+    // If the customer does not exist, return a 404.
+    if (error.code == "document_not_found") {
+      return res
+        .status(404)
+        .send({ reason: `No customer with id '${id}'` });
+    }
+    return res.status(500).send({ reason: "The request failed", error });
+  }
+});
+
+/**
+ * Create or Return Cart
+ * @route {POST} /customer/:id/cart
+ * @param id string
+ * @returns Cart
+ */
+router.post("/customers/:id/cart", async (req: Request, res: Response) => {
+  const { id } = req.params;
+  try {
+    const { data } = await faunaClient.query(fql`fetchOrCreateCustomerCart(${id})`);
     return res.status(200).send({ data });
   } catch (error: any) {
     console.log(error);

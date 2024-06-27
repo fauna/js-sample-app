@@ -97,3 +97,37 @@ collection OrderItem {
   }
 }
 
+function fetchOrCreateCustomerCart(id) {
+  let customer = Customer.byId(id)
+  if (customer == null) {
+    // Return a 404 if we can't find the customer
+    customer
+  }
+  if (customer!.cart == null) {
+    // Create a cart if the customer does not have one
+    Order.create({
+      status: 'cart',
+      customer: Customer.byId(id),
+      createdAt: Time.now(),
+      payment: {}
+    }) {
+      id,
+      status,
+      createdAt,
+      payment,
+      items,
+      total
+    }
+
+  } else {
+    customer!.cart {
+      id,
+      status,
+      createdAt,
+      payment,
+      items,
+      total
+    }
+  }
+}
+
