@@ -5,7 +5,31 @@ import { faunaClient } from "../../fauna/fauna-client";
 const router = Router();
 
 /**
- * Post Cart Item
+ * Create or return a customer's cart
+ * @route {POST} /customer/:id/cart
+ * @param id string
+ * @returns Order
+ */
+router.post("/customers/:id/cart", async (req: Request, res: Response) => {
+  const { id } = req.params;
+  try {
+    const { data: cart } = await faunaClient.query(fql`createCart(${id})`);
+
+    return res.status(200).send(cart);
+  } catch (error: any) {
+    // We abort our UDF if the customer does not exist.
+    if (error.abort) {
+      return res.status(400).send({
+        reason: error.abort,
+      });
+    }
+
+    return res.status(500).send({ reason: "The request failed", error });
+  }
+});
+
+/**
+ * Update a customer's cart
  * @route {POST} /customers/:id/cart/item
  * @param id string
  * @bodyparam productName

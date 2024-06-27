@@ -1,7 +1,7 @@
 import { NullDocument, ServiceError, fql } from "fauna";
 import { faunaClient } from "../../fauna/fauna-client";
 import { Request, Response, Router } from "express";
-import { getCustomer, createCustomer } from "./customers.service";
+import { Customer } from "./customers.model";
 
 const router = Router();
 
@@ -14,7 +14,9 @@ const router = Router();
 router.get("/customers/:id", async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const { data: customer } = await getCustomer(id);
+    const { data: customer } = await faunaClient.query<Customer>(
+      fql`Customer.byId(${id})`
+    );
 
     // If the customer does not exist, return a 404.
     if (customer instanceof NullDocument) {
@@ -28,7 +30,7 @@ router.get("/customers/:id", async (req: Request, res: Response) => {
       email: customer.email,
       orders: customer.orders,
     });
-  } catch (error) {
+  } catch (error: any) {
     return res.status(500).send({ reason: "The request failed unexpectedly." });
   }
 });
@@ -43,10 +45,12 @@ router.get("/customers/:id", async (req: Request, res: Response) => {
 router.post("/customers", async (req: Request, res: Response) => {
   try {
     const { name, email, address } = req.body;
-    const { data: customer } = await createCustomer({ name, email, address });
+    const { data: customer } = await faunaClient.query<Customer>(
+      fql`Customer.create(${{ name, email, address }})`
+    );
 
     return res.status(201).send({ name: customer.name, email: customer.email });
-  } catch (error) {
+  } catch (error: any) {
     // Handle errors returned by Fauna here.
     if (error instanceof ServiceError) {
       // We have a single unique constraint on the email field.
@@ -58,29 +62,6 @@ router.post("/customers", async (req: Request, res: Response) => {
     }
 
     return res.status(500).send({ reason: "The request failed unexpectedly." });
-  }
-});
-
-/**
- * Create or Return Cart
- * @route {POST} /customer/:id/cart
- * @param id string
- * @returns Cart
- */
-router.post("/customers/:id/cart", async (req: Request, res: Response) => {
-  const { id } = req.params;
-  try {
-    const { data } = await faunaClient.query(fql`fetchOrCreateCustomerCart(${id})`);
-    return res.status(200).send({ data });
-  } catch (error: any) {
-    console.log(error);
-    // If the customer does not exist, return a 404.
-    if (error.code == "document_not_found") {
-      return res
-        .status(404)
-        .send({ reason: `No customer with id '${id}'` });
-    }
-    return res.status(500).send({ reason: "The request failed", error });
   }
 });
 

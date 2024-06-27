@@ -49,3 +49,38 @@ function updateCartItem(customerId, productName, quantity) {
     orderItem!.update({ quantity: quantity })
   }
 }
+
+function createCart(id) {
+  let customer = Customer.byId(id)
+
+  // Check if the customer exists.
+  if (customer == null) {
+    abort("Customer does not exist.")
+  }
+
+  if (customer!.cart == null) {
+    // Create a cart if the customer does not have one
+    Order.create({
+      status: 'cart',
+      customer: Customer.byId(id),
+      createdAt: Time.now(),
+      payment: {}
+    }) {
+      id,
+      status,
+      createdAt,
+      payment,
+      items,
+      total
+    }
+  } else {
+    customer!.cart {
+      id,
+      status,
+      createdAt,
+      payment,
+      items,
+      total
+    }
+  }
+}
