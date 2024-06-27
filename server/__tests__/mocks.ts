@@ -31,7 +31,9 @@ export const mockCustomer = (overrides?: {
   const fakeName = faker.internet.userName();
   return {
     name: overrides?.name || fakeName,
-    email: overrides?.email || `${fakeName.toLowerCase()}+${ts}@fauna.com`,
+    email:
+      overrides?.email ||
+      `${(overrides?.name || fakeName).toLowerCase()}+${ts}@fauna.com`,
     address: mockAddr(overrides?.address),
   };
 };
@@ -43,11 +45,13 @@ export const mockProduct = (overrides?: {
   description?: string;
 }) => {
   const ts = new Date().getTime();
+  const fakeName = faker.commerce.productName() + ` (${ts})`;
+  const fakeDescription = faker.commerce.productDescription();
   return {
-    name: overrides?.name || `Lava Lamp (${ts})`,
+    name: overrides?.name || fakeName,
     price: overrides?.price || 100.0,
     stock: overrides?.stock || 10,
-    descrition: overrides?.description || "A groovy lamp for your pad.",
+    descrition: overrides?.description || fakeDescription,
   };
 };
 
@@ -56,8 +60,9 @@ export const mockCategory = (overrides?: {
   description?: string;
 }) => {
   const ts = new Date().getTime();
+  const fakeCategory = faker.commerce.department() + ` (${ts})`;
   return {
-    name: overrides?.name || `Home Decor (${ts})`,
-    description: overrides?.description || "Products to decorate your home.",
+    name: overrides?.name || fakeCategory,
+    description: overrides?.description || fakeCategory + " is great!",
   };
 };

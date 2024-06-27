@@ -1,4 +1,4 @@
-import { NullDocument, ServiceError, fql } from "fauna";
+import { fql, NullDocument, ServiceError } from "fauna";
 import { faunaClient } from "../../fauna/fauna-client";
 import { Request, Response, Router } from "express";
 import { Customer } from "./customers.model";
@@ -12,8 +12,9 @@ const router = Router();
  * @returns Customer
  */
 router.get("/customers/:id", async (req: Request, res: Response) => {
+  const { id } = req.params;
+
   try {
-    const { id } = req.params;
     const { data: customer } = await faunaClient.query<Customer>(
       fql`Customer.byId(${id})`
     );
@@ -45,8 +46,9 @@ router.get("/customers/:id", async (req: Request, res: Response) => {
  * @returns Customer
  */
 router.post("/customers", async (req: Request, res: Response) => {
+  const { name, email, address } = req.body;
+
   try {
-    const { name, email, address } = req.body;
     const { data: customer } = await faunaClient.query<Customer>(
       fql`Customer.create(${{ name, email, address }})`
     );

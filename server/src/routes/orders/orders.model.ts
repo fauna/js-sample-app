@@ -1,8 +1,8 @@
-import { TimeStub } from "fauna";
+import { TimeStub, QueryValueObject } from "fauna";
 import { Product } from "../products/products.model";
 import { Customer } from "../customers/customers.model";
 
-export interface Order {
+export interface Order extends QueryValueObject {
   id: string;
   createdAt: TimeStub;
   customer: Customer;
@@ -11,7 +11,7 @@ export interface Order {
   total: number;
 }
 
-export interface OrderItem {
+export interface OrderItem extends QueryValueObject {
   order: Order;
   product: Product;
   quantity: number;

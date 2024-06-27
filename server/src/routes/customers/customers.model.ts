@@ -14,5 +14,3 @@ export interface Customer {
     country: string;
   };
 }
-
-export type CustomerInput = Pick<Customer, "name" | "email" | "address">;
