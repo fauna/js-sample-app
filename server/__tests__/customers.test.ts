@@ -35,11 +35,11 @@ describe("Customers", () => {
 
   describe("POST /customers", () => {
     it("returns a 201 if the customer is created successfully", async () => {
-      const ts = new Date().getTime();
-      const res = await req(app).post("/customers").send(mockCustomer());
+      const bob = mockCustomer({ name: "Bob" });
+      const res = await req(app).post("/customers").send(bob);
       expect(res.status).toEqual(201);
-      expect(res.body.name).toEqual("Bob");
-      expect(res.body.email).toEqual(`bob+${ts}@fauna.com`);
+      expect(res.body.name).toEqual(bob.name);
+      expect(res.body.email).toEqual(bob.email);
     });
 
     it("returns a 409 if the customer already exists", async () => {
