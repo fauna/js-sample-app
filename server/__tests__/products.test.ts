@@ -70,14 +70,13 @@ describe("Products", () => {
 
     it("Gets products for a specific category", async () => {
       const res = await req(app).get(`/products?category=electronics`);
-      const expectedProducts = new Set(products.electronics.map(p => ({ ...p, category: "electronics" })));
+        const expectedProducts = new Set(products.electronics.map(p => (JSON.stringify({ ...p, category: "electronics" }))));
       expect(res.status).toEqual(200);
       expect(res.body.nextToken).toBeUndefined();
       for (const product of res.body.results) {
-        console.log(expectedProducts);
-        console.log(product);
-        expect(expectedProducts.has(product)).toBe(true);
+        expect(expectedProducts.has(JSON.stringify(product))).toBe(true);
       }
+      expect(res.body.results.length).toEqual(expectedProducts.size);
     });
   });
 });

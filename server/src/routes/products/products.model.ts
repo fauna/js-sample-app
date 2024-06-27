@@ -1,15 +1,8 @@
-import { QueryValueObject } from "fauna";
-
-export interface Product extends QueryValueObject{
+export interface Product {
   name: string;
   description: string;
   price: number;
   stock: number;
-  category: Category;
+  category: string;
 }
 
-export interface Category {
-  name: string;
-  description: string;
-  products: Product[];
-}

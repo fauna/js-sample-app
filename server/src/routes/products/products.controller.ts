@@ -18,15 +18,22 @@ router.get("/products", async (req: Request, res: Response) => {
                   fql`Product.sortedByCategory()` :
                   fql`Product.byCategory(Category.byName(${category}).first())`
 
-    const products = await faunaClient.query<{data: DocumentT<Product>[], after: string}>(query)
+    const products = await faunaClient.query<{data: Product[], after: string}>(fql`
+      ${query}
+      // just return the Product data we want to display to the user
+      .map(product => {
+        let category: Any = product.category
+       {
+         name: product.name,
+         price: product.price,
+         description: product.description,
+         stock: product.stock,
+         category: category?.name,
+       }
+      })
+    `);
     return res.json({
-      results: products
-        .data.data
-        .map((product: DocumentT<Product>) => {
-          // filter out Fauna object fields since our clients don't need them
-          const { ts, ttl, coll, id, ...rest } = product;
-          return rest;
-        }),
+      results: products.data.data,
       nextToken: products.data.after
     });
   } catch (e) {
