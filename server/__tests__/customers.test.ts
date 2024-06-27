@@ -56,6 +56,7 @@ describe("Customers", () => {
 
   describe("PATCH /customers/:id", () => {
     it("returns a 200 if the customer is updated successfully", async () => {
+      expect(customer.name).not.toEqual("Alice");
       const res = await req(app)
         .patch(`/customers/${customer.id}`)
         .send({ name: "Alice" });
