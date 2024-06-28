@@ -171,4 +171,37 @@ describe("Orders", () => {
       });
     });
   });
+
+  describe("PATCH /orders/:id", () => {
+    it("updates the order", async () => {
+      console.log('Original', order);
+      const res = await req(app)
+        .patch(`/orders/${order.id}`)
+        .send({ status: "processing" });
+      expect(res.status).toEqual(200);
+      expect(res.body.status).toEqual("processing");
+    });
+
+    it("returns a 400 if the order does not exist", async () => {
+      const res = await req(app)
+        .patch("/orders/1234")
+        .send({ status: "shipped" });
+      expect(res.status).toEqual(400);
+      expect(res.body).toEqual({
+        reason: "Order does not exist.",
+      });
+    });
+
+    it("returns a 400 if the status is invalid", async () => {
+      const res = await req(app)
+        .patch(`/orders/${order.id}`)
+        .send({ status: "cart" });
+      expect(res.status).toEqual(400);
+      expect(res.body).toEqual({
+        reason: "Invalid status transition.",
+      });
+    });
+  });
+
+
 });

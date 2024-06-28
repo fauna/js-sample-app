@@ -47,7 +47,7 @@ export const seedTestData = async (opts?: { numOrders: number }) => {
       `);
   }
 
-  const order = (await faunaClient.query(fql`Order.all().first()`)).data;
+  const order = (await faunaClient.query(fql`Order.where(.status == 'cart').first()`)).data;
 
   return { product, category, customer, order };
 };

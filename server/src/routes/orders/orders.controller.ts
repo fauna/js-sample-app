@@ -2,6 +2,7 @@ import { fql, AbortError, type DocumentT, type Page } from "fauna";
 import { Request, Response, Router } from "express";
 import { faunaClient } from "../../fauna/fauna-client";
 import { Order, OrderItem } from "./orders.model";
+import { validateOrderUpdate } from "../../middlewares";
 
 const router = Router();
 
@@ -71,7 +72,7 @@ router.post("/customers/:id/cart", async (req: Request, res: Response) => {
  * @bodyparam order
  */
 
-router.patch("/orders/:id", async (req: Request, res: Response) => {
+router.patch("/orders/:id", validateOrderUpdate, async (req: Request, res: Response) => {
   const { id } = req.params;
   const order = req.body;
   try {
@@ -81,6 +82,17 @@ router.patch("/orders/:id", async (req: Request, res: Response) => {
         
         if (order == null) {
           abort("Order does not exist.")
+        }
+
+        // Check the logic transition of the order status
+        if (order!.status == "cart" && (${order.status} != null && ${order.status} != "processing")) {
+          abort("Invalid status transition.")
+        }
+        if (order!.status == "processing" && (${order.status} != null && ${order.status} != "shipped")) {
+          abort("Invalid status transition.")
+        }
+        if (order!.status == "shipped" && (${order.status} != null && ${order.status} != "delivered")) {
+          abort("Invalid status transition.")
         }
         
         order!.update({
