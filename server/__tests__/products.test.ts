@@ -223,7 +223,6 @@ describe("Products", () => {
       const updateRes = await req(app)
         .patch(`/products/${product.name}`)
         .send({ price: 19.99 });
-      console.log(updateRes.body);
       expect(updateRes.status).toEqual(200);
       expect(updateRes.body.price).toEqual(19.99);
       expect(updateRes.body.stock).toEqual(product.stock);
@@ -233,7 +232,6 @@ describe("Products", () => {
       const res = await req(app)
         .patch(`/products/notarealproduct`)
         .send({ price: 19.99 });
-      console.log(res.body);
       expect(res.status).toEqual(400);
       expect(res.body.message).toEqual("Product does not exist.");
     });
