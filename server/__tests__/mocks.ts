@@ -43,6 +43,7 @@ export const mockProduct = (overrides?: {
   price?: number;
   stock?: number;
   description?: string;
+  category?: string;
 }) => {
   const ts = new Date().getTime();
   const fakeName = faker.commerce.productName() + ` (${ts})`;
@@ -51,7 +52,8 @@ export const mockProduct = (overrides?: {
     name: overrides?.name || fakeName,
     price: overrides?.price || 100.0,
     stock: overrides?.stock || 10,
-    descrition: overrides?.description || fakeDescription,
+    description: overrides?.description || fakeDescription,
+    category: overrides?.category || faker.commerce.department(),
   };
 };
 

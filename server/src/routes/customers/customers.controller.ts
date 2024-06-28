@@ -27,14 +27,14 @@ router.get("/customers/:id", async (req: Request, res: Response) => {
     if (customer instanceof NullDocument) {
       return res
         .status(404)
-        .send({ reason: `No customer with id '${id}' exists.` });
+        .send({ message: `No customer with id '${id}' exists.` });
     }
 
     return res.status(200).send(docToCustomer(customer));
   } catch (error: any) {
     return res
       .status(500)
-      .send({ reason: "The request failed unexpectedly.", error });
+      .send({ message: "The request failed unexpectedly.", error });
   }
 });
 
@@ -61,13 +61,13 @@ router.post("/customers", async (req: Request, res: Response) => {
       if (error.code === "constraint_failure") {
         return res
           .status(409)
-          .send({ reason: "A customer with that email already exists." });
+          .send({ message: "A customer with that email already exists." });
       }
     }
 
     return res
       .status(500)
-      .send({ reason: "The request failed unexpectedly.", error });
+      .send({ message: "The request failed unexpectedly.", error });
   }
 });
 
@@ -97,19 +97,19 @@ router.patch("/customers/:id", async (req: Request, res: Response) => {
       if (error.code === "document_not_found") {
         return res
           .status(404)
-          .send({ reason: `No customer with id '${id}' exists.` });
+          .send({ message: `No customer with id '${id}' exists.` });
       }
       // If there is already a customer with that email, return a 409.
       if (error.code === "constraint_failure") {
         return res
           .status(409)
-          .send({ reason: "A customer with that email already exists." });
+          .send({ message: "A customer with that email already exists." });
       }
     }
 
     return res
       .status(500)
-      .send({ reason: "The request failed unexpectedly.", error });
+      .send({ message: "The request failed unexpectedly.", error });
   }
 });
 
