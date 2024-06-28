@@ -27,7 +27,7 @@ export const seedTestData = async (opts?: { numOrders: number }) => {
           name: ${mock.name},
           price: ${mock.price},
           stock: ${mock.stock},
-          description: ${mock.descrition},
+          description: ${mock.description},
           category: category
         })
       `

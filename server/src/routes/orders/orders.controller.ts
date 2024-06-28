@@ -23,13 +23,13 @@ router.post("/customers/:id/cart", async (req: Request, res: Response) => {
     // We abort our UDF if the customer does not exist.
     if (error instanceof AbortError) {
       return res.status(400).send({
-        reason: error.abort,
+        message: error.abort,
       });
     }
 
     return res
       .status(500)
-      .send({ reason: "The request failed unexpectedly.", error });
+      .send({ message: "The request failed unexpectedly.", error });
   }
 });
 
@@ -100,12 +100,12 @@ router.post("/customers/:id/orders", async (req: Request, res: Response) => {
   } catch (error: any) {
     // Handle any abort conditions we defined in the UDF.
     if (error instanceof AbortError) {
-      return res.status(400).send({ reason: error.abort });
+      return res.status(400).send({ message: error.abort });
     }
 
     return res
       .status(500)
-      .send({ reason: "The request failed unexpectedly.", error });
+      .send({ message: "The request failed unexpectedly.", error });
   }
 });
 
@@ -123,7 +123,7 @@ router.post("/customers/:id/cart/item", async (req: Request, res: Response) => {
 
   if (!productName || !quantity) {
     return res.status(400).send({
-      reason: "You must provide a productName and quantity.",
+      message: "You must provide a productName and quantity.",
     });
   }
 
@@ -139,13 +139,13 @@ router.post("/customers/:id/cart/item", async (req: Request, res: Response) => {
     // Use them to return appropriate error messages.
     if (error instanceof AbortError) {
       return res.status(400).send({
-        reason: error.abort,
+        message: error.abort,
       });
     }
 
     return res
       .status(500)
-      .send({ reason: "The request failed unexpectedly.", error });
+      .send({ message: "The request failed unexpectedly.", error });
   }
 });
 
@@ -178,12 +178,12 @@ router.get("/customers/:id/cart", async (req: Request, res: Response) => {
   } catch (error: any) {
     // Handle any abort conditions we defined in the UDF.
     if (error instanceof AbortError) {
-      return res.status(400).send({ reason: error?.abort });
+      return res.status(400).send({ message: error?.abort });
     }
 
     return res
       .status(500)
-      .send({ reason: "The request failed unexpectedly.", error });
+      .send({ message: "The request failed unexpectedly.", error });
   }
 });
 
