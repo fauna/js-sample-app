@@ -5,6 +5,37 @@ import { Order, OrderItem } from "./orders.model";
 
 const router = Router();
 
+
+/**
+ * Get an order by its ID.
+ * @route {GET} /orders/:id
+ * @param id string
+ * @returns Order
+ */
+router.get("/orders/:id", async (req: Request, res: Response) => {
+  const { id } = req.params;
+  try {
+    const { data: order } = await faunaClient.query<DocumentT<Order>>(
+      fql`
+        let order = Order.byId(${id})
+        if (order == null) { abort("No order with id exists.") }
+        order
+      `
+    );
+
+    return res.status(200).send(order);
+  } catch (error: any) {
+    // Handle any abort conditions we defined in the UDF.
+    if (error instanceof AbortError) {
+      return res.status(400).send({ reason: error.abort });
+    }
+
+    return res
+      .status(500)
+      .send({ reason: "The request failed unexpectedly.", error });
+  }
+});
+
 /**
  * Get a customer's cart. Create one if it does not exist.
  * @route {POST} /customer/:id/cart
