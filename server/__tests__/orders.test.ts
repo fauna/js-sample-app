@@ -11,8 +11,8 @@ describe("Orders", () => {
   let order: any;
 
   beforeAll(async () => {
-    const { product: p, customer: c, order: o } = await seedTestData({ numOrders: 2 });
-    product = p;
+    const { products: p, customer: c, order: o } = await seedTestData();
+    product = p[0];
     customer = c;
     order = o;
   });
@@ -26,6 +26,8 @@ describe("Orders", () => {
     it("returns a 200 if the cart is retrieved successfully", async () => {
       const res = await req(app).get(`/customers/${customer.id}/cart`);
       expect(res.status).toEqual(200);
+      expect(res.body.id).toBeDefined();
+      expect(res.body.createdAt).toBeDefined();
     });
 
     it("returns a 400 if the customer does not exist", async () => {
@@ -36,7 +38,7 @@ describe("Orders", () => {
   });
 
   describe("POST /customers/:id/cart", () => {
-    it("creates the cart", async () => {
+    it("creates the cart if it does not exist", async () => {
       const res = await req(app).post(`/customers/${customer.id}/cart`);
       expect(res.status).toEqual(200);
       expect(res.body.id).toBeDefined();

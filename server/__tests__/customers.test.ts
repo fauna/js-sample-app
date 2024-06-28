@@ -25,12 +25,15 @@ describe("Customers", () => {
       expect(res.status).toEqual(200);
       expect(res.body.name).toEqual(customer.name);
       expect(res.body.email).toEqual(customer.email);
+      // Ensure internal fields are not exposed.
+      expect(res.body.ts).toBeUndefined();
     });
 
     it("returns a 404 if the customer does not exist", async () => {
       const res = await req(app).get("/customers/1234");
+      console.log(res.body);
       expect(res.status).toEqual(404);
-      expect(res.body.message).toEqual("No customer with id '1234' exists.");
+      expect(res.body.reason).toEqual("No customer with id '1234' exists.");
     });
   });
 
@@ -48,7 +51,7 @@ describe("Customers", () => {
         .post("/customers")
         .send(mockCustomer({ email: customer.email }));
       expect(res.status).toEqual(409);
-      expect(res.body.message).toEqual(
+      expect(res.body.reason).toEqual(
         "A customer with that email already exists."
       );
     });
@@ -71,7 +74,7 @@ describe("Customers", () => {
         .patch("/customers/1234")
         .send({ name: "Alice" });
       expect(res.status).toEqual(404);
-      expect(res.body.message).toEqual("No customer with id '1234' exists.");
+      expect(res.body.reason).toEqual("No customer with id '1234' exists.");
     });
 
     it("returns a 409 if the email is already in use", async () => {
@@ -85,7 +88,7 @@ describe("Customers", () => {
         .patch(`/customers/${data.id}`)
         .send({ email: customer.email });
       expect(res.status).toEqual(409);
-      expect(res.body.message).toEqual(
+      expect(res.body.reason).toEqual(
         "A customer with that email already exists."
       );
     });
