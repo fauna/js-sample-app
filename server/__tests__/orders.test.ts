@@ -31,7 +31,7 @@ describe("Orders", () => {
     it("returns a 400 if the customer does not exist", async () => {
       const res = await req(app).get("/customers/1234/cart");
       expect(res.status).toEqual(400);
-      expect(res.body.reason).toEqual("No customer with id exists.");
+      expect(res.body.message).toEqual("No customer with id exists.");
     });
   });
 
@@ -48,7 +48,7 @@ describe("Orders", () => {
     it("returns a 400 if the customer does not exist", async () => {
       const res = await req(app).post("/customers/1234/cart");
       expect(res.status).toEqual(400);
-      expect(res.body.reason).toEqual("Customer does not exist.");
+      expect(res.body.message).toEqual("Customer does not exist.");
     });
   });
 
@@ -85,7 +85,7 @@ describe("Orders", () => {
       const res = await req(app).post("/customers/1234/orders");
       expect(res.status).toEqual(400);
       expect(res.body).toEqual({
-        reason: "Customer does not exist.",
+        message: "Customer does not exist.",
       });
     });
   });
@@ -111,7 +111,7 @@ describe("Orders", () => {
         const res = await req(app).post("/customers/1/cart/item").send(payload);
         expect(res.status).toEqual(400);
         expect(res.body).toEqual({
-          reason: "You must provide a productName and quantity.",
+          message: "You must provide a productName and quantity.",
         });
       });
     });
@@ -122,7 +122,7 @@ describe("Orders", () => {
         .send({ productName: product.name, quantity: 1 });
       expect(res.status).toEqual(400);
       expect(res.body).toEqual({
-        reason: "Customer does not exist.",
+        message: "Customer does not exist.",
       });
     });
 
@@ -132,7 +132,7 @@ describe("Orders", () => {
         .send({ productName: "Bogus Product", quantity: 10 });
       expect(res.status).toEqual(400);
       expect(res.body).toEqual({
-        reason: "Product does not exist.",
+        message: "Product does not exist.",
       });
     });
 
@@ -142,7 +142,7 @@ describe("Orders", () => {
         .send({ productName: product.name, quantity: -1 });
       expect(res.status).toEqual(400);
       expect(res.body).toEqual({
-        reason: "Quantity must be a non-negative integer.",
+        message: "Quantity must be a non-negative integer.",
       });
     });
 
@@ -152,7 +152,7 @@ describe("Orders", () => {
         .send({ productName: product.name, quantity: 100000 });
       expect(res.status).toEqual(400);
       expect(res.body).toEqual({
-        reason: "Product does not have the requested quantity in stock.",
+        message: "Product does not have the requested quantity in stock.",
       });
     });
   });
