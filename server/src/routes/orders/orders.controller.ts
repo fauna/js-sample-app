@@ -2,6 +2,7 @@ import { fql, AbortError, type DocumentT, type Page } from "fauna";
 import { Request, Response, Router } from "express";
 import { faunaClient } from "../../fauna/fauna-client";
 import { Order, OrderItem } from "./orders.model";
+import { validateOrderUpdate } from "../../middlewares";
 
 const router = Router();
 
@@ -61,6 +62,56 @@ router.post("/customers/:id/cart", async (req: Request, res: Response) => {
     return res
       .status(500)
       .send({ message: "The request failed unexpectedly.", error });
+  }
+});
+
+/**
+ * Update a order item 
+ * @route {PATCH} /order/:id
+ * @param id string
+ * @bodyparam order
+ */
+
+router.patch("/orders/:id", validateOrderUpdate, async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const order = req.body;
+  try {
+    const { data: updatedOrder } = await faunaClient.query<DocumentT<Order>>(
+      fql`
+        let order = Order.byId(${id})
+        
+        if (order == null) {
+          abort("Order does not exist.")
+        }
+
+        // Check the logic transition of the order status
+        if (order!.status == "cart" && (${order.status} != null && ${order.status} != "processing")) {
+          abort("Invalid status transition.")
+        }
+        if (order!.status == "processing" && (${order.status} != null && ${order.status} != "shipped")) {
+          abort("Invalid status transition.")
+        }
+        if (order!.status == "shipped" && (${order.status} != null && ${order.status} != "delivered")) {
+          abort("Invalid status transition.")
+        }
+        
+        order!.update({
+          ${order}
+        })
+      `
+    );
+
+    return res.status(200).send(updatedOrder);
+  } catch (error: any) {
+    console.error(error);
+    if (error instanceof AbortError) {
+      return res.status(400).send({
+        reason: error.abort,
+      });
+    }
+    return res
+      .status(500)
+      .send({ reason: "The request failed unexpectedly.", error });
   }
 });
 
