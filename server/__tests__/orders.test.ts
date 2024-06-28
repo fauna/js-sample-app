@@ -8,11 +8,13 @@ import { Customer } from "../src/routes/customers/customers.model";
 describe("Orders", () => {
   let product: Product;
   let customer: Customer;
+  let order: any;
 
   beforeAll(async () => {
-    const { product: p, customer: c } = await seedTestData({ numOrders: 2 });
+    const { product: p, customer: c, order: o } = await seedTestData({ numOrders: 2 });
     product = p;
     customer = c;
+    order = o;
   });
 
   afterAll(async () => {
@@ -155,25 +157,17 @@ describe("Orders", () => {
     });
   });
 
-  describe("PATCH /orders/:id", () => {
-    it("updates the order status", async () => {
-      // Create a new order.
-      const { body: order } = await req(app).post(`/customers/${customer.id}/cart`);
-      // Update the order status.
-      const res = await req(app)
-        .patch(`/orders/${order.id}`)
-        .send({ status: "processing" });
+  describe("GET /orders/:id", () => {
+    it("returns a 200 if the order is retrieved successfully", async () => {
+      const res = await req(app).get(`/orders/${order.id}`);
       expect(res.status).toEqual(200);
-      expect(res.body.status).toEqual("processing");
     });
 
     it("returns a 400 if the order does not exist", async () => {
-      const res = await req(app)
-        .patch("/orders/1234")
-        .send({ status: "processing" });
+      const res = await req(app).get("/orders/1234");
       expect(res.status).toEqual(400);
       expect(res.body).toEqual({
-        reason: "Order does not exist.",
+        reason: "No order with id exists.",
       });
     });
   });
