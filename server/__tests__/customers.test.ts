@@ -30,7 +30,7 @@ describe("Customers", () => {
     it("returns a 404 if the customer does not exist", async () => {
       const res = await req(app).get("/customers/1234");
       expect(res.status).toEqual(404);
-      expect(res.body.reason).toEqual("No customer with id '1234' exists.");
+      expect(res.body.message).toEqual("No customer with id '1234' exists.");
     });
   });
 
@@ -48,7 +48,7 @@ describe("Customers", () => {
         .post("/customers")
         .send(mockCustomer({ email: customer.email }));
       expect(res.status).toEqual(409);
-      expect(res.body.reason).toEqual(
+      expect(res.body.message).toEqual(
         "A customer with that email already exists."
       );
     });
@@ -71,7 +71,7 @@ describe("Customers", () => {
         .patch("/customers/1234")
         .send({ name: "Alice" });
       expect(res.status).toEqual(404);
-      expect(res.body.reason).toEqual("No customer with id '1234' exists.");
+      expect(res.body.message).toEqual("No customer with id '1234' exists.");
     });
 
     it("returns a 409 if the email is already in use", async () => {
@@ -85,7 +85,7 @@ describe("Customers", () => {
         .patch(`/customers/${data.id}`)
         .send({ email: customer.email });
       expect(res.status).toEqual(409);
-      expect(res.body.reason).toEqual(
+      expect(res.body.message).toEqual(
         "A customer with that email already exists."
       );
     });
