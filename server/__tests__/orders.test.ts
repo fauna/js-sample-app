@@ -154,4 +154,27 @@ describe("Orders", () => {
       });
     });
   });
+
+  describe("PATCH /orders/:id", () => {
+    it("updates the order status", async () => {
+      // Create a new order.
+      const { body: order } = await req(app).post(`/customers/${customer.id}/cart`);
+      // Update the order status.
+      const res = await req(app)
+        .patch(`/orders/${order.id}`)
+        .send({ status: "processing" });
+      expect(res.status).toEqual(200);
+      expect(res.body.status).toEqual("processing");
+    });
+
+    it("returns a 400 if the order does not exist", async () => {
+      const res = await req(app)
+        .patch("/orders/1234")
+        .send({ status: "processing" });
+      expect(res.status).toEqual(400);
+      expect(res.body).toEqual({
+        reason: "Order does not exist.",
+      });
+    });
+  });
 });

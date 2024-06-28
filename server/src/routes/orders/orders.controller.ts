@@ -34,6 +34,45 @@ router.post("/customers/:id/cart", async (req: Request, res: Response) => {
 });
 
 /**
+ * Update a order item 
+ * @route {PATCH} /order/:id
+ * @param id string
+ * @bodyparam order
+ */
+
+router.patch("/orders/:id", async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const order = req.body;
+  try {
+    const { data: updatedOrder } = await faunaClient.query<DocumentT<Order>>(
+      fql`
+        let order = Order.byId(${id})
+        
+        if (order == null) {
+          abort("Order does not exist.")
+        }
+        
+        order!.update({
+          ${order}
+        })
+      `
+    );
+
+    return res.status(200).send(updatedOrder);
+  } catch (error: any) {
+    console.error(error);
+    if (error instanceof AbortError) {
+      return res.status(400).send({
+        reason: error.abort,
+      });
+    }
+    return res
+      .status(500)
+      .send({ reason: "The request failed unexpectedly.", error });
+  }
+});
+
+/**
  * Get a customer's orders.
  * @route {POST} /customers/:id/orders
  * @param id string
