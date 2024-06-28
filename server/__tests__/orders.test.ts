@@ -8,11 +8,13 @@ import { Customer } from "../src/routes/customers/customers.model";
 describe("Orders", () => {
   let product: Product;
   let customer: Customer;
+  let order: any;
 
   beforeAll(async () => {
-    const { product: p, customer: c } = await seedTestData({ numOrders: 2 });
+    const { product: p, customer: c, order: o } = await seedTestData({ numOrders: 2 });
     product = p;
     customer = c;
+    order = o;
   });
 
   afterAll(async () => {
@@ -151,6 +153,21 @@ describe("Orders", () => {
       expect(res.status).toEqual(400);
       expect(res.body).toEqual({
         reason: "Product does not have the requested quantity in stock.",
+      });
+    });
+  });
+
+  describe("GET /orders/:id", () => {
+    it("returns a 200 if the order is retrieved successfully", async () => {
+      const res = await req(app).get(`/orders/${order.id}`);
+      expect(res.status).toEqual(200);
+    });
+
+    it("returns a 400 if the order does not exist", async () => {
+      const res = await req(app).get("/orders/1234");
+      expect(res.status).toEqual(400);
+      expect(res.body).toEqual({
+        reason: "No order with id exists.",
       });
     });
   });
