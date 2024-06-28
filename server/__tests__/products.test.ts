@@ -214,7 +214,7 @@ describe("Products", () => {
     });
   });
 
-  describe("PATCH /products/:id", () => {
+  describe("PATCH /products/:name", () => {
     it("Updates a product", async () => {
       const product = mockProduct({ price: 10.99, category: "electronics" });
       const createRes = await req(app).post(`/products`).send(product);
