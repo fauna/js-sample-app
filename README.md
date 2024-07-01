@@ -39,7 +39,7 @@ Configuration updated.
 Create a Database to use with the sample app:
 
 ```sh
-$ fauna create-database ECommerce
+$ fauna create-database --endpoint=cloud-us --environment='' ECommerce 
 creating database ECommerce
 
   created database ECommerce
