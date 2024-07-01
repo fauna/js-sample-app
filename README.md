@@ -147,7 +147,7 @@ server is listening at http://localhost:8000
 
 ## Run tests
 
-With the API server running, verify everything is working correctly by runnint
+With the API server running, verify everything is working correctly by running
 tests. Change to the sample app `server` directory and run tests via `npm`:
 
 ```sh
