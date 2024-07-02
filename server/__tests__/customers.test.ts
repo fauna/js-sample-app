@@ -40,12 +40,11 @@ describe("Customers", () => {
 
   describe("POST /customers", () => {
     it("returns a 201 if the customer is created successfully", async () => {
-      const ts = new Date().getTime();
-      const bob = mockCustomer({ email: `bob+${ts}@fauna.com` });
-      const res = await req(app).post("/customers").send(bob);
+      const cust = mockCustomer();
+      const res = await req(app).post("/customers").send(cust);
       customersToCleanup.push(res.body);
       expect(res.status).toEqual(201);
-      expect(res.body.email).toEqual(bob.email);
+      expect(res.body.email).toEqual(cust.email);
     });
 
     it("returns a 409 if the customer already exists", async () => {
@@ -59,20 +58,19 @@ describe("Customers", () => {
 
   describe("PATCH /customers/:id", () => {
     it("returns a 200 if the customer is updated successfully", async () => {
-      // Create a new customer named Bob.
-      const ts = new Date().getTime();
-      const bob = mockCustomer({ name: "Bob", email: `bob+${ts}@fauna.com` });
-      const createRes = await req(app).post("/customers").send(bob);
+      // Create a new customer.
+      const cust = mockCustomer();
+      const createRes = await req(app).post("/customers").send(cust);
       expect(createRes.status).toEqual(201);
       customersToCleanup.push(createRes.body);
-      // Update Bob's name to Alice.
+      // Update the customer's name to Alice.
       const updateRes = await req(app)
         .patch(`/customers/${createRes.body.id}`)
         .send({ name: "Alice" });
       expect(updateRes.status).toEqual(200);
       expect(updateRes.body.name).toEqual("Alice");
       // Confirm the email did not change.
-      expect(updateRes.body.email).toEqual(bob.email);
+      expect(updateRes.body.email).toEqual(cust.email);
     });
 
     it("returns a 404 if the customer does not exist", async () => {
@@ -82,13 +80,12 @@ describe("Customers", () => {
     });
 
     it("returns a 409 if the email is already in use", async () => {
-      // Create a new customer named Bob.
-      const ts = new Date().getTime();
-      const bob = mockCustomer({ name: "Bob", email: `bob+${ts}@fauna.com` });
-      const createRes = await req(app).post("/customers").send(bob);
+      // Create a new customer.
+      const cust = mockCustomer();
+      const createRes = await req(app).post("/customers").send(cust);
       expect(createRes.status).toEqual(201);
       customersToCleanup.push(createRes.body);
-      // Try to update change Bob's email to an email that already exists.
+      // Try to update the customer's email to an existing email.
       const updateRes = await req(app)
         .patch(`/customers/${createRes.body.id}`)
         .send({ email: customer.email });

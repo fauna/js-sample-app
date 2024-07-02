@@ -108,7 +108,7 @@ export const seedTestData = async () => {
   await Promise.all(productCreates);
 
   // Create a customer.
-  const c = mockCustomer({ name: "Tony Stark" });
+  const c = mockCustomer({ name: "Mr. Bigglesworth" });
   const customer = (
     await faunaClient.query<Customer>(
       fql`Customer.byEmail(${c.email}).first() ?? Customer.create(${c})`

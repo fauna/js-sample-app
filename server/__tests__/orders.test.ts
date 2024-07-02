@@ -57,9 +57,8 @@ describe("Orders", () => {
   describe("POST /customers/:id/cart", () => {
     it("creates the cart if it does not exist", async () => {
       // Create a new customer, they will not have a cart.
-      const ts = new Date().getTime();
-      const bob = mockCustomer({ email: `bob+${ts}@fauna.com` });
-      const customerRes = await req(app).post("/customers").send(bob);
+      const cust = mockCustomer();
+      const customerRes = await req(app).post("/customers").send(cust);
       customersToCleanup.push(customerRes.body);
       expect(customerRes.status).toEqual(201);
       // Create the cart for the customer.
@@ -119,9 +118,8 @@ describe("Orders", () => {
   describe("POST /customers/:id/cart/item", () => {
     it("updates the cart with the new item", async () => {
       // Create a new customer.
-      const ts = new Date().getTime();
-      const bob = mockCustomer({ email: `bob+${ts}@fauna.com` });
-      const customerRes = await req(app).post("/customers").send(bob);
+      const cust = mockCustomer();
+      const customerRes = await req(app).post("/customers").send(cust);
       customersToCleanup.push(customerRes.body);
       expect(customerRes.status).toEqual(201);
       // Add an item to the cart.
@@ -207,9 +205,8 @@ describe("Orders", () => {
   describe("PATCH /orders/:id", () => {
     it("updates the order", async () => {
       // Create a new customer.
-      const ts = new Date().getTime();
-      const bob = mockCustomer({ email: `bob+${ts}@fauna.com` });
-      const customerRes = await req(app).post("/customers").send(bob);
+      const cusotmer = mockCustomer();
+      const customerRes = await req(app).post("/customers").send(cusotmer);
       customersToCleanup.push(customerRes.body);
       expect(customerRes.status).toEqual(201);
       // Create a cart for the customer.
@@ -236,9 +233,8 @@ describe("Orders", () => {
 
     it("returns a 400 if the status is invalid", async () => {
       // Create a new customer.
-      const ts = new Date().getTime();
-      const bob = mockCustomer({ email: `bob+${ts}@fauna.com` });
-      const customerRes = await req(app).post("/customers").send(bob);
+      const cust = mockCustomer();
+      const customerRes = await req(app).post("/customers").send(cust);
       customersToCleanup.push(customerRes.body);
       expect(customerRes.status).toEqual(201);
       // Create a cart for the customer.
