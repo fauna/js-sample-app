@@ -20,6 +20,14 @@ $ npm install --global fauna-shell
 
 ## Setting up your project
 
+With your general node environment set up and the Fauna CLI installed, you are
+ready to run the sample app. Clone this repo, and then open up a terminal and cd
+into your cloned repository.
+
+```sh
+$ cd /path/to/js-sample-app
+```
+
 ### Log in to your Fauna account
 
 If you have not done so already, log in to your Fauna account via the CLI.
@@ -39,7 +47,7 @@ Configuration updated.
 Create a Database to use with the sample app:
 
 ```sh
-$ fauna create-database ECommerce
+$ fauna create-database --endpoint=cloud-us --environment='' ECommerce 
 creating database ECommerce
 
   created database ECommerce
