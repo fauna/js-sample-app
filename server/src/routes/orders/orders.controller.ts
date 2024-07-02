@@ -6,7 +6,6 @@ import { validateOrderUpdate } from "../../middlewares";
 
 const router = Router();
 
-
 /**
  * Get an order by its ID.
  * @route {GET} /orders/:id
@@ -66,54 +65,56 @@ router.post("/customers/:id/cart", async (req: Request, res: Response) => {
 });
 
 /**
- * Update a order item 
+ * Update a order item
  * @route {PATCH} /order/:id
  * @param id string
  * @bodyparam order
  */
 
-router.patch("/orders/:id", validateOrderUpdate, async (req: Request, res: Response) => {
-  const { id } = req.params;
-  const order = req.body;
-  try {
-    const { data: updatedOrder } = await faunaClient.query<DocumentT<Order>>(
-      fql`
+router.patch(
+  "/orders/:id",
+  validateOrderUpdate,
+  async (req: Request, res: Response) => {
+    const { id } = req.params;
+    const { status, payment } = req.body;
+
+    try {
+      const { data: updatedOrder } = await faunaClient.query<DocumentT<Order>>(
+        fql`
         let order = Order.byId(${id})
-        
+
         if (order == null) {
           abort("Order does not exist.")
         }
 
         // Check the logic transition of the order status
-        if (order!.status == "cart" && (${order.status} != null && ${order.status} != "processing")) {
+        if (order!.status == "cart" && (${status} != null && ${status} != "processing")) {
           abort("Invalid status transition.")
         }
-        if (order!.status == "processing" && (${order.status} != null && ${order.status} != "shipped")) {
+        if (order!.status == "processing" && (${status} != null && ${status} != "shipped")) {
           abort("Invalid status transition.")
         }
-        if (order!.status == "shipped" && (${order.status} != null && ${order.status} != "delivered")) {
+        if (order!.status == "shipped" && (${status} != null && ${status} != "delivered")) {
           abort("Invalid status transition.")
         }
-        
-        order!.update({
-          ${order}
-        })
-      `
-    );
 
-    return res.status(200).send(updatedOrder);
-  } catch (error: any) {
-    console.error(error);
-    if (error instanceof AbortError) {
-      return res.status(400).send({
-        reason: error.abort,
-      });
+        order!.update(${{ status, payment }})
+      `
+      );
+
+      return res.status(200).send(updatedOrder);
+    } catch (error: any) {
+      if (error instanceof AbortError) {
+        return res.status(400).send({
+          reason: error.abort,
+        });
+      }
+      return res
+        .status(500)
+        .send({ reason: "The request failed unexpectedly.", error });
     }
-    return res
-      .status(500)
-      .send({ reason: "The request failed unexpectedly.", error });
   }
-});
+);
 
 /**
  * Get a customer's orders.
@@ -203,7 +204,7 @@ router.get("/customers/:id/cart", async (req: Request, res: Response) => {
   const { id } = req.params;
 
   try {
-    const { data } = await faunaClient.query<DocumentT<Order>>(fql`
+    const { data: cart } = await faunaClient.query<DocumentT<Order>>(fql`
       let customer = Customer.byId(${id})
 
       if (customer == null) {
@@ -217,7 +218,7 @@ router.get("/customers/:id/cart", async (req: Request, res: Response) => {
         createdAt
       }
     `);
-    return res.status(200).send({ data });
+    return res.status(200).send(cart);
   } catch (error: any) {
     // Handle any abort conditions we defined in the UDF.
     if (error instanceof AbortError) {

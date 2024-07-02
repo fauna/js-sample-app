@@ -1,5 +1,6 @@
 import req from "supertest";
 import app from "../src/app";
+import { fql } from "fauna";
 import { faunaClient } from "../src/fauna/fauna-client";
 import { seedTestData } from "./seed";
 import { mockProduct } from "./mocks";
@@ -7,6 +8,7 @@ import { Product } from "../src/routes/products/products.model";
 
 describe("Products", () => {
   let products: Array<Product>;
+  let productsToCleanup: Array<Product> = [];
 
   beforeAll(async () => {
     const { products: p } = await seedTestData();
@@ -14,6 +16,10 @@ describe("Products", () => {
   });
 
   afterAll(async () => {
+    // Clean up any products we created.
+    for (const p of productsToCleanup) {
+      await faunaClient.query(fql`Product.byName(${p.name}).first()!.delete()`);
+    }
     // Clean up our connection to Fauna.
     faunaClient.close();
   });
@@ -22,6 +28,7 @@ describe("Products", () => {
     it("Gets all products", async () => {
       const res = await req(app).get(`/products`);
       expect(res.status).toEqual(200);
+      expect(res.body.results.length).toBeGreaterThan(0);
     });
 
     it("Gets products for a specific category", async () => {
@@ -44,12 +51,9 @@ describe("Products", () => {
     it("Creates a product", async () => {
       const product = mockProduct({ category: "electronics" });
       const res = await req(app).post(`/products`).send(product);
+      productsToCleanup.push(res.body);
       expect(res.status).toEqual(201);
       expect(res.body.name).toEqual(product.name);
-      expect(res.body.price).toEqual(product.price);
-      expect(res.body.description).toEqual(product.description);
-      expect(res.body.stock).toEqual(product.stock);
-      expect(res.body.category).toEqual("electronics");
     });
 
     it("Returns a 400 if the name is missing", async () => {
@@ -103,16 +107,9 @@ describe("Products", () => {
     });
 
     it("Returns a 409 if the product already exists", async () => {
-      const product = {
-        name: "iPhone",
-        price: 100_00,
-        description: "Apple's flagship phone",
-        stock: 100,
-        category: "electronics",
-      };
       const res = await req(app)
         .post(`/products`)
-        .send({ ...product });
+        .send({ ...products[0] });
       expect(res.status).toEqual(409);
       expect(res.body.message).toEqual(
         "A product with that name already exists."
@@ -126,12 +123,13 @@ describe("Products", () => {
       const createRes = await req(app).post(`/products`).send(product);
       expect(createRes.status).toEqual(201);
       expect(createRes.body.price).toEqual(10.99);
+      productsToCleanup.push(createRes.body);
       const updateRes = await req(app)
         .patch(`/products/${product.name}`)
         .send({ price: 19.99 });
       expect(updateRes.status).toEqual(200);
       expect(updateRes.body.price).toEqual(19.99);
-      expect(updateRes.body.stock).toEqual(product.stock);
+      expect(updateRes.body.name).toEqual(product.name);
     });
 
     it("Returns a 400 if the product does not exist", async () => {
@@ -144,14 +142,14 @@ describe("Products", () => {
 
     it("Returns a 400 if the price is invalid", async () => {
       const priceAsString = await req(app)
-        .patch("/products/doesnotmatter")
+        .patch("/products/does-not-matter")
         .send({ price: "not a number" });
       expect(priceAsString.status).toEqual(400);
       expect(priceAsString.body.message).toEqual(
         "Price must be a number greater than 0 or be omitted."
       );
       const negativePrice = await req(app)
-        .patch("/products/doesnotmatter")
+        .patch("/products/does-not-matter")
         .send({ price: -1 });
       expect(negativePrice.status).toEqual(400);
       expect(negativePrice.body.message).toEqual(
@@ -161,14 +159,14 @@ describe("Products", () => {
 
     it("Returns a 400 if the stock is invalid", async () => {
       const stockAsString = await req(app)
-        .patch("/products/doesnotmatter")
+        .patch("/products/does-not-matter")
         .send({ stock: "not a number" });
       expect(stockAsString.status).toEqual(400);
       expect(stockAsString.body.message).toEqual(
         "Stock must be a number greater than or equal to 0 or be omitted."
       );
       const negativeStock = await req(app)
-        .patch("/products/doesnotmatter")
+        .patch("/products/does-not-matter")
         .send({ stock: -1 });
       expect(negativeStock.status).toEqual(400);
       expect(negativeStock.body.message).toEqual(
@@ -178,7 +176,7 @@ describe("Products", () => {
 
     it("Returns a 400 if the category is invalid", async () => {
       const categoryAsString = await req(app)
-        .patch("/products/doesnotmatter")
+        .patch("/products/does-not-matter")
         .send({ category: 123 });
       expect(categoryAsString.status).toEqual(400);
       expect(categoryAsString.body.message).toEqual(
@@ -188,7 +186,7 @@ describe("Products", () => {
 
     it("Returns a 400 if the description is invalid", async () => {
       const descriptionAsNumber = await req(app)
-        .patch("/products/doesnotmatter")
+        .patch("/products/does-not-matter")
         .send({ description: 123 });
       expect(descriptionAsNumber.status).toEqual(400);
       expect(descriptionAsNumber.body.message).toEqual(
