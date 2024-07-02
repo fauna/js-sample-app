@@ -27,13 +27,14 @@ export const mockCustomer = (overrides?: {
     country?: string;
   };
 }) => {
-  const ts = new Date().getTime();
   const fakeName = faker.internet.userName();
   return {
     name: overrides?.name || fakeName,
     email:
       overrides?.email ||
-      `${(overrides?.name || fakeName).toLowerCase()}+${ts}@fauna.com`,
+      `${(overrides?.name || fakeName)
+        .replace(/\s/g, "")
+        .toLowerCase()}@fauna.com`,
     address: mockAddr(overrides?.address),
   };
 };
@@ -45,8 +46,7 @@ export const mockProduct = (overrides?: {
   description?: string;
   category?: string;
 }) => {
-  const ts = new Date().getTime();
-  const fakeName = faker.commerce.productName() + ` (${ts})`;
+  const fakeName = faker.commerce.productName();
   const fakeDescription = faker.commerce.productDescription();
   return {
     name: overrides?.name || fakeName,
@@ -54,17 +54,5 @@ export const mockProduct = (overrides?: {
     stock: overrides?.stock || 10,
     description: overrides?.description || fakeDescription,
     category: overrides?.category || faker.commerce.department(),
-  };
-};
-
-export const mockCategory = (overrides?: {
-  name?: string;
-  description?: string;
-}) => {
-  const ts = new Date().getTime();
-  const fakeCategory = faker.commerce.department() + ` (${ts})`;
-  return {
-    name: overrides?.name || fakeCategory,
-    description: overrides?.description || fakeCategory + " is great!",
   };
 };

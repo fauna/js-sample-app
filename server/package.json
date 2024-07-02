@@ -7,7 +7,7 @@
     "build": "tsc",
     "test": "jest",
     "dev": "nodemon src/index.ts",
-    "start": "build; node build/src/index.js"
+    "start": "npm run build; node build/src/index.js"
   },
   "author": "",
   "license": "ISC",

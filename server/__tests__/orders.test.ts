@@ -1,23 +1,41 @@
 import req from "supertest";
 import app from "../src/app";
+import { fql } from "fauna";
 import { seedTestData } from "./seed";
+import { mockCustomer } from "./mocks";
 import { faunaClient } from "../src/fauna/fauna-client";
+import { Order } from "../src/routes/orders/orders.model";
 import { Product } from "../src/routes/products/products.model";
 import { Customer } from "../src/routes/customers/customers.model";
 
 describe("Orders", () => {
   let product: Product;
   let customer: Customer;
-  let order: any;
+  let order: Order;
+  let customersToCleanup: Array<Customer> = [];
 
   beforeAll(async () => {
-    const { product: p, customer: c, order: o } = await seedTestData({ numOrders: 2 });
-    product = p;
+    const { products: p, customer: c, orders: o } = await seedTestData();
+    product = p[0];
     customer = c;
-    order = o;
+    order = o[0];
   });
 
   afterAll(async () => {
+    // Clean up any customer we created along with their orders.
+    for (const c of customersToCleanup) {
+      await faunaClient.query(fql`
+        // Get the customer.
+        let customer = Customer.byId(${c.id})
+        // Delete all orders & order items associated with the order.
+        Order.byCustomer(customer).forEach(order => {
+          OrderItem.byOrder(order).forEach(orderItem => orderItem!.delete())
+          order!.delete()
+        })
+        // Delete the customer.
+        customer!.delete()
+      `);
+    }
     // Clean up our connection to Fauna.
     faunaClient.close();
   });
@@ -26,6 +44,7 @@ describe("Orders", () => {
     it("returns a 200 if the cart is retrieved successfully", async () => {
       const res = await req(app).get(`/customers/${customer.id}/cart`);
       expect(res.status).toEqual(200);
+      expect(res.body.createdAt).toBeDefined();
     });
 
     it("returns a 400 if the customer does not exist", async () => {
@@ -36,13 +55,19 @@ describe("Orders", () => {
   });
 
   describe("POST /customers/:id/cart", () => {
-    it("creates the cart", async () => {
-      const res = await req(app).post(`/customers/${customer.id}/cart`);
-      expect(res.status).toEqual(200);
-      expect(res.body.id).toBeDefined();
-      expect(res.body.status).toEqual("cart");
-      expect(res.body.createdAt).toBeDefined();
-      expect(res.body.total).toEqual(0);
+    it("creates the cart if it does not exist", async () => {
+      // Create a new customer, they will not have a cart.
+      const cust = mockCustomer();
+      const customerRes = await req(app).post("/customers").send(cust);
+      customersToCleanup.push(customerRes.body);
+      expect(customerRes.status).toEqual(201);
+      // Create the cart for the customer.
+      const cartRes = await req(app).post(
+        `/customers/${customerRes.body.id}/cart`
+      );
+      expect(cartRes.status).toEqual(200);
+      expect(cartRes.body.status).toEqual("cart");
+      expect(cartRes.body.total).toEqual(0);
     });
 
     it("returns a 400 if the customer does not exist", async () => {
@@ -92,15 +117,20 @@ describe("Orders", () => {
 
   describe("POST /customers/:id/cart/item", () => {
     it("updates the cart with the new item", async () => {
+      // Create a new customer.
+      const cust = mockCustomer();
+      const customerRes = await req(app).post("/customers").send(cust);
+      customersToCleanup.push(customerRes.body);
+      expect(customerRes.status).toEqual(201);
       // Add an item to the cart.
       const firstResp = await req(app)
-        .post(`/customers/${customer.id}/cart/item`)
+        .post(`/customers/${customerRes.body.id}/cart/item`)
         .send({ productName: product.name, quantity: 1 });
       expect(firstResp.status).toEqual(200);
       expect(firstResp.body.quantity).toEqual(1);
       // Update the quantity of the item in the cart.
       const secondResp = await req(app)
-        .post(`/customers/${customer.id}/cart/item`)
+        .post(`/customers/${customerRes.body.id}/cart/item`)
         .send({ productName: product.name, quantity: 2 });
       expect(secondResp.status).toEqual(200);
       expect(secondResp.body.quantity).toEqual(2);
@@ -174,18 +204,27 @@ describe("Orders", () => {
 
   describe("PATCH /orders/:id", () => {
     it("updates the order", async () => {
-      console.log('Original', order);
-      const res = await req(app)
-        .patch(`/orders/${order.id}`)
+      // Create a new customer.
+      const cusotmer = mockCustomer();
+      const customerRes = await req(app).post("/customers").send(cusotmer);
+      customersToCleanup.push(customerRes.body);
+      expect(customerRes.status).toEqual(201);
+      // Create a cart for the customer.
+      const cart = await req(app).post(
+        `/customers/${customerRes.body.id}/cart`
+      );
+      // Update the status of the order.
+      const orderRes = await req(app)
+        .patch(`/orders/${cart.body.id}`)
         .send({ status: "processing" });
-      expect(res.status).toEqual(200);
-      expect(res.body.status).toEqual("processing");
+      expect(orderRes.status).toEqual(200);
+      expect(orderRes.body.status).toEqual("processing");
     });
 
     it("returns a 400 if the order does not exist", async () => {
       const res = await req(app)
         .patch("/orders/1234")
-        .send({ status: "shipped" });
+        .send({ status: "delivered" });
       expect(res.status).toEqual(400);
       expect(res.body).toEqual({
         reason: "Order does not exist.",
@@ -193,15 +232,23 @@ describe("Orders", () => {
     });
 
     it("returns a 400 if the status is invalid", async () => {
-      const res = await req(app)
-        .patch(`/orders/${order.id}`)
-        .send({ status: "cart" });
-      expect(res.status).toEqual(400);
-      expect(res.body).toEqual({
+      // Create a new customer.
+      const cust = mockCustomer();
+      const customerRes = await req(app).post("/customers").send(cust);
+      customersToCleanup.push(customerRes.body);
+      expect(customerRes.status).toEqual(201);
+      // Create a cart for the customer.
+      const cartRes = await req(app).post(
+        `/customers/${customerRes.body.id}/cart`
+      );
+      // Update the status to "delivered" which is not a valid transition.
+      const updateRes = await req(app)
+        .patch(`/orders/${cartRes.body.id}`)
+        .send({ status: "delivered" });
+      expect(updateRes.status).toEqual(400);
+      expect(updateRes.body).toEqual({
         reason: "Invalid status transition.",
       });
     });
   });
-
-
 });

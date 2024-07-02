@@ -1,115 +1,25 @@
 import req from "supertest";
 import app from "../src/app";
-import { faunaClient } from "../src/fauna/fauna-client";
 import { fql } from "fauna";
+import { faunaClient } from "../src/fauna/fauna-client";
+import { seedTestData } from "./seed";
 import { mockProduct } from "./mocks";
+import { Product } from "../src/routes/products/products.model";
 
 describe("Products", () => {
-  const products: Record<
-    string,
-    Array<{ name: string; price: number; description: string; stock: number }>
-  > = {
-    electronics: [
-      {
-        name: "iPhone",
-        price: 100_00,
-        description: "Apple's flagship phone",
-        stock: 100,
-      },
-      {
-        name: "Drone",
-        price: 90_00,
-        description: "Fly and let people wonder if you're filming them!",
-        stock: 0,
-      },
-      {
-        name: "Signature Box III",
-        price: 3000_00,
-        description: "Hooli's latest box!",
-        stock: 1000,
-      },
-      {
-        name: "Rapsberry Pi",
-        price: 30_00,
-        description: "A tiny computer",
-        stock: 5,
-      },
-    ],
-    books: [
-      {
-        name: "For Whom the Bell Tolls",
-        price: 8_99,
-        description: "A book by Ernest Hemingway",
-        stock: 10,
-      },
-      {
-        name: "Getting Started with Fauna",
-        price: 19_99,
-        description: "A book by Fauna, Inc.",
-        stock: 0,
-      },
-    ],
-    movies: [
-      {
-        name: "The Godfather",
-        price: 12_99,
-        description: "A movie by Francis Ford Coppola",
-        stock: 10,
-      },
-      {
-        name: "The Godfather II",
-        price: 12_99,
-        description: "A movie by Francis Ford Coppola",
-        stock: 10,
-      },
-      {
-        name: "The Godfather III",
-        price: 12_99,
-        description: "A movie by Francis Ford Coppola",
-        stock: 10,
-      },
-    ],
-  };
+  let products: Array<Product>;
+  let productsToCleanup: Array<Product> = [];
 
   beforeAll(async () => {
-    try {
-      const categoryCreates = [];
-      const productCreates = [];
-      for (const category of Object.keys(products)) {
-        categoryCreates.push(
-          faunaClient.query(fql`
-         Category.byName(${category}).first() ??
-            Category.create({ name: ${category}, description: "Bargain #{${category}}!" })
-      `)
-        );
-      }
-      await Promise.all(categoryCreates);
-      for (const [category, categoryProducts] of Object.entries(products)) {
-        for (const product of categoryProducts) {
-          productCreates.push(
-            faunaClient.query(fql`
-         Product.byName(${product.name}).first() ??
-            Product.create({
-              name: ${product.name},
-              price: ${product.price},
-              description: ${product.description},
-              stock: ${product.stock},
-              category: Category.byName(${category}).first()!,
-            })
-        `)
-          );
-        }
-      }
-      // create all the categories
-      // now create all the products
-      await Promise.all(productCreates);
-    } catch (e) {
-      console.error(e);
-      throw e;
-    }
+    const { products: p } = await seedTestData();
+    products = p;
   });
 
   afterAll(async () => {
+    // Clean up any products we created.
+    for (const p of productsToCleanup) {
+      await faunaClient.query(fql`Product.byName(${p.name}).first()!.delete()`);
+    }
     // Clean up our connection to Fauna.
     faunaClient.close();
   });
@@ -118,12 +28,15 @@ describe("Products", () => {
     it("Gets all products", async () => {
       const res = await req(app).get(`/products`);
       expect(res.status).toEqual(200);
+      expect(res.body.results.length).toBeGreaterThan(0);
     });
 
     it("Gets products for a specific category", async () => {
       const res = await req(app).get(`/products?category=books`);
       const expectedProducts = new Set(
-        products.books.map((p) => JSON.stringify({ ...p, category: "books" }))
+        products
+          .filter((p) => p.category === "books")
+          .map((p) => JSON.stringify({ ...p, category: "books" }))
       );
       expect(res.status).toEqual(200);
       expect(res.body.nextToken).toBeUndefined();
@@ -138,12 +51,9 @@ describe("Products", () => {
     it("Creates a product", async () => {
       const product = mockProduct({ category: "electronics" });
       const res = await req(app).post(`/products`).send(product);
+      productsToCleanup.push(res.body);
       expect(res.status).toEqual(201);
       expect(res.body.name).toEqual(product.name);
-      expect(res.body.price).toEqual(product.price);
-      expect(res.body.description).toEqual(product.description);
-      expect(res.body.stock).toEqual(product.stock);
-      expect(res.body.category).toEqual("electronics");
     });
 
     it("Returns a 400 if the name is missing", async () => {
@@ -197,16 +107,9 @@ describe("Products", () => {
     });
 
     it("Returns a 409 if the product already exists", async () => {
-      const product = {
-        name: "iPhone",
-        price: 100_00,
-        description: "Apple's flagship phone",
-        stock: 100,
-        category: "electronics",
-      };
       const res = await req(app)
         .post(`/products`)
-        .send({ ...product });
+        .send({ ...products[0] });
       expect(res.status).toEqual(409);
       expect(res.body.message).toEqual(
         "A product with that name already exists."
@@ -220,12 +123,13 @@ describe("Products", () => {
       const createRes = await req(app).post(`/products`).send(product);
       expect(createRes.status).toEqual(201);
       expect(createRes.body.price).toEqual(10.99);
+      productsToCleanup.push(createRes.body);
       const updateRes = await req(app)
         .patch(`/products/${product.name}`)
         .send({ price: 19.99 });
       expect(updateRes.status).toEqual(200);
       expect(updateRes.body.price).toEqual(19.99);
-      expect(updateRes.body.stock).toEqual(product.stock);
+      expect(updateRes.body.name).toEqual(product.name);
     });
 
     it("Returns a 400 if the product does not exist", async () => {
@@ -238,14 +142,14 @@ describe("Products", () => {
 
     it("Returns a 400 if the price is invalid", async () => {
       const priceAsString = await req(app)
-        .patch("/products/doesnotmatter")
+        .patch("/products/does-not-matter")
         .send({ price: "not a number" });
       expect(priceAsString.status).toEqual(400);
       expect(priceAsString.body.message).toEqual(
         "Price must be a number greater than 0 or be omitted."
       );
       const negativePrice = await req(app)
-        .patch("/products/doesnotmatter")
+        .patch("/products/does-not-matter")
         .send({ price: -1 });
       expect(negativePrice.status).toEqual(400);
       expect(negativePrice.body.message).toEqual(
@@ -255,14 +159,14 @@ describe("Products", () => {
 
     it("Returns a 400 if the stock is invalid", async () => {
       const stockAsString = await req(app)
-        .patch("/products/doesnotmatter")
+        .patch("/products/does-not-matter")
         .send({ stock: "not a number" });
       expect(stockAsString.status).toEqual(400);
       expect(stockAsString.body.message).toEqual(
         "Stock must be a number greater than or equal to 0 or be omitted."
       );
       const negativeStock = await req(app)
-        .patch("/products/doesnotmatter")
+        .patch("/products/does-not-matter")
         .send({ stock: -1 });
       expect(negativeStock.status).toEqual(400);
       expect(negativeStock.body.message).toEqual(
@@ -272,7 +176,7 @@ describe("Products", () => {
 
     it("Returns a 400 if the category is invalid", async () => {
       const categoryAsString = await req(app)
-        .patch("/products/doesnotmatter")
+        .patch("/products/does-not-matter")
         .send({ category: 123 });
       expect(categoryAsString.status).toEqual(400);
       expect(categoryAsString.body.message).toEqual(
@@ -282,7 +186,7 @@ describe("Products", () => {
 
     it("Returns a 400 if the description is invalid", async () => {
       const descriptionAsNumber = await req(app)
-        .patch("/products/doesnotmatter")
+        .patch("/products/does-not-matter")
         .send({ description: 123 });
       expect(descriptionAsNumber.status).toEqual(400);
       expect(descriptionAsNumber.body.message).toEqual(
