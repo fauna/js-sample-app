@@ -31,7 +31,7 @@ describe("Customers", () => {
       expect(res.body.email).toEqual(customer.email);
     });
 
-    it("omitts internal fauna fields", async () => {
+    it("omits internal fauna fields", async () => {
       const res = await req(app).get(`/customers/${customer.id}`);
       expect(res.status).toEqual(200);
       // Check that top level internal fields are removed.
