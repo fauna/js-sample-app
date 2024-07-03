@@ -130,8 +130,8 @@ describe("Customers", () => {
       // Create a new customer.
       const cust = mockCustomer();
       const createRes = await req(app).post("/customers").send(cust);
-      expect(createRes.status).toEqual(201);
       customersToCleanup.push(createRes.body);
+      expect(createRes.status).toEqual(201);
       // Update the customer's name to Alice.
       const updateRes = await req(app)
         .patch(`/customers/${createRes.body.id}`)
@@ -182,8 +182,8 @@ describe("Customers", () => {
       // Create a new customer.
       const cust = mockCustomer();
       const createRes = await req(app).post("/customers").send(cust);
-      expect(createRes.status).toEqual(201);
       customersToCleanup.push(createRes.body);
+      expect(createRes.status).toEqual(201);
       // Try to update the customer's email to an existing email.
       const updateRes = await req(app)
         .patch(`/customers/${createRes.body.id}`)
