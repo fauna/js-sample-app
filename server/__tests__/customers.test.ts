@@ -27,13 +27,9 @@ describe("Customers", () => {
   describe("GET /customers/:id", () => {
     it("returns a 200 if the customer exists", async () => {
       const res = await req(app).get(`/customers/${customer.id}`);
+      // Check that the response is correct.
       expect(res.status).toEqual(200);
       expect(res.body.email).toEqual(customer.email);
-    });
-
-    it("omits internal fauna fields", async () => {
-      const res = await req(app).get(`/customers/${customer.id}`);
-      expect(res.status).toEqual(200);
       // Check that top level internal fields are removed.
       expect(res.body.ts).toBeUndefined();
       expect(res.body.coll).toBeUndefined();
