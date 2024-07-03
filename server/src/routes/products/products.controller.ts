@@ -141,34 +141,37 @@ router.patch(
     // Extract the id from the request parameters.
     const { id } = req.params;
     // Extract fields from the request body.
-    const { price, description, stock, category, name: bodyName } = req.body;
+    const { price, description, stock, category, name } = req.body;
 
     try {
+      // Connect to fauna using the faunaClient. The query method accepts
+      // an FQL query as a parameter as well as an optional return type. In this
+      // case, we are using the DocumentT type to specify that the query will return
+      // a single document representing a Product.
       const { data: product } = await faunaClient.query<DocumentT<Product>>(
         fql`
-        // Get the product by name. We can use .first() here because we know that the product
-        // name is unique.
-        let product: Any = Product.byId(${id})!
-        // Get the category by name. We can use .first() here because we know that the category
-        // name is unique.
-        let category = Category.byName(${category ?? ""}).first()
-        // If a category was provided and it does not exist, abort the transaction.
-        if (${!!category} && category == null) abort("Category does not exist.")
-        let fields = ${{ price, stock, description }}
-        if (category != null) {
-          // If a category was provided, update the product with the new category document as well as
-          // any other fields that were provided.
-          product!.update(
-            Object.assign(fields, { category: category })
-          ) { name, price, description, stock, category: .category!.name }
-        } else {
-          // If no category was provided, update the product with the fields that were provided.
-          product!.update(fields) { name, price, description, stock, category: .category!.name }
-        }
-      `
+          // Get the product by id, using the ! operator to assert that the product exists.
+          // If it does not exist Fauna will throw a document_not_found error.
+          let product: Any = Product.byId(${id})!
+          // Get the category by name. We can use .first() here because we know that the category
+          // name is unique.
+          let category = Category.byName(${category ?? ""}).first()
+          // If a category was provided and it does not exist, abort the transaction.
+          if (${!!category} && category == null) abort("Category does not exist.")
+          let fields = ${{ name, price, stock, description }}
+          if (category != null) {
+            // If a category was provided, update the product with the new category document as well as
+            // any other fields that were provided.
+            product!.update(Object.assign(fields, { category: category }))
+          } else {
+            // If no category was provided, update the product with the fields that were provided.
+            product!.update(fields)
+          }
+        `
       );
 
-      return res.send(product);
+      // Return the updated product, stripping out any unnecessary fields.
+      return res.send(removeInternalFields(product));
     } catch (error: any) {
       // Handle errors returned by Fauna here. AbortErrors are thrown when we use the
       // abort function in our FQL query.
@@ -183,12 +186,16 @@ router.patch(
           return res
             .status(404)
             .send({ message: `No product with id '${id}' exists.` });
+        } else if (error.code === "constraint_failure") {
+          // If there is already a product with that name, return a 409.
+          return res
+            .status(409)
+            .send({ message: "A product with that name already exists." });
         }
       }
 
-      return res
-        .status(500)
-        .send({ message: "The request failed unexpectedly.", error });
+      // Return a generic 500 if we encounter an unexpected error.
+      return res.status(500).send({ message: "Internal Server Error" });
     }
   }
 );
