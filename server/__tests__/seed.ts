@@ -89,7 +89,11 @@ export const seedTestData = async () => {
   const productCreates = [];
   for (const [category, categoryProducts] of Object.entries(mockProducts)) {
     for (const product of categoryProducts) {
-      products.push({ ...product, category });
+      products.push({
+        id: "does-not-matter",
+        ...product,
+        category: { name: category, description: `Bargin ${category}!` },
+      });
       productCreates.push(
         faunaClient.query<Product>(fql`
           let p: Any = Product.byName(${product.name}).first() ??

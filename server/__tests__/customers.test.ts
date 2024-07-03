@@ -61,7 +61,7 @@ describe("Customers", () => {
       // Check that the response is correct.
       expect(res.status).toEqual(201);
       expect(res.body.email).toEqual(cust.email);
-      // Check that top level internal fields are removed.
+      // Check that internal fields are removed.
       expect(res.body.ts).toBeUndefined();
       expect(res.body.coll).toBeUndefined();
     });
@@ -141,7 +141,7 @@ describe("Customers", () => {
       expect(updateRes.body.name).toEqual("Alice");
       // Confirm the email did not change.
       expect(updateRes.body.email).toEqual(cust.email);
-      // Check that top level internal fields are removed.
+      // Check that internal fields are removed.
       expect(updateRes.body.ts).toBeUndefined();
       expect(updateRes.body.coll).toBeUndefined();
     });
