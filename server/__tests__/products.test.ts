@@ -70,52 +70,91 @@ describe("Products", () => {
       expect(res.body.category.coll).toBeUndefined();
     });
 
-    it("Returns a 400 if the name is missing", async () => {
+    it("Returns a 400 if 'name' is missing or invalid", async () => {
       const { name, ...rest } = mockProduct({ category: "electronics" });
-      const res = await req(app).post(`/products`).send(rest);
-      expect(res.status).toEqual(400);
-      expect(res.body.message).toEqual("Name must be a non-empty string.");
+      const missingRes = await req(app).post(`/products`).send(rest);
+      expect(missingRes.status).toEqual(400);
+      expect(missingRes.body.message).toEqual(
+        "Name must be a non-empty string."
+      );
+      const invalidRes = await req(app)
+        .post(`/products`)
+        .send({ ...rest, name: 123 });
+      expect(invalidRes.status).toEqual(400);
+      expect(invalidRes.body.message).toEqual(
+        "Name must be a non-empty string."
+      );
     });
 
-    it("Returns a 400 if the price is missing", async () => {
+    it("Returns a 400 if 'price' is missing or invalid", async () => {
       const { price, ...rest } = mockProduct({ category: "electronics" });
-      const res = await req(app).post(`/products`).send(rest);
-      expect(res.status).toEqual(400);
-      expect(res.body.message).toEqual(
+      const missingRes = await req(app).post(`/products`).send(rest);
+      expect(missingRes.status).toEqual(400);
+      expect(missingRes.body.message).toEqual(
+        "Price must be a number greater than 0."
+      );
+      const invalidRes = await req(app)
+        .post(`/products`)
+        .send({ ...rest, price: "foo" });
+      expect(invalidRes.status).toEqual(400);
+      expect(invalidRes.body.message).toEqual(
         "Price must be a number greater than 0."
       );
     });
 
-    it("Returns a 400 if the description is missing", async () => {
+    it("Returns a 400 if 'description' is missing or invalid", async () => {
       const { description, ...rest } = mockProduct({ category: "electronics" });
-      const res = await req(app).post(`/products`).send(rest);
-      expect(res.status).toEqual(400);
-      expect(res.body.message).toEqual(
+      const missingRes = await req(app).post(`/products`).send(rest);
+      expect(missingRes.status).toEqual(400);
+      expect(missingRes.body.message).toEqual(
+        "Description must be a non-empty string."
+      );
+      const invalidRes = await req(app)
+        .post(`/products`)
+        .send({ ...rest, description: 123 });
+      expect(invalidRes.status).toEqual(400);
+      expect(invalidRes.body.message).toEqual(
         "Description must be a non-empty string."
       );
     });
 
-    it("Returns a 400 if the stock is missing", async () => {
+    it("Returns a 400 if 'stock' is missing or invalid", async () => {
       const { stock, ...rest } = mockProduct({ category: "electronics" });
-      const res = await req(app).post(`/products`).send(rest);
-      expect(res.status).toEqual(400);
-      expect(res.body.message).toEqual(
+      const missingRes = await req(app).post(`/products`).send(rest);
+      expect(missingRes.status).toEqual(400);
+      expect(missingRes.body.message).toEqual(
+        "Stock must be a number greater than or equal to 0."
+      );
+      const invalidRes = await req(app)
+        .post(`/products`)
+        .send({ ...rest, stock: -1 });
+      expect(invalidRes.status).toEqual(400);
+      expect(invalidRes.body.message).toEqual(
         "Stock must be a number greater than or equal to 0."
       );
     });
 
-    it("Returns a 400 if the category is missing", async () => {
+    it("Returns a 400 if 'category' is missing or invalid", async () => {
       const { category, ...rest } = mockProduct();
-      const res = await req(app).post(`/products`).send(rest);
-      expect(res.status).toEqual(400);
-      expect(res.body.message).toEqual("Category must be a non-empty string.");
+      const missingRes = await req(app).post(`/products`).send(rest);
+      expect(missingRes.status).toEqual(400);
+      expect(missingRes.body.message).toEqual(
+        "Category must be a non-empty string."
+      );
+      const invalidRes = await req(app)
+        .post(`/products`)
+        .send({ ...rest, category: 123 });
+      expect(invalidRes.status).toEqual(400);
+      expect(invalidRes.body.message).toEqual(
+        "Category must be a non-empty string."
+      );
     });
 
     it("Returns a 400 if the category does not exist", async () => {
       const product = mockProduct();
       const res = await req(app)
         .post(`/products`)
-        .send({ ...product, category: "non-existent" });
+        .send({ ...product, category: "does not exist" });
       expect(res.status).toEqual(400);
       expect(res.body.message).toEqual("Category does not exist.");
     });

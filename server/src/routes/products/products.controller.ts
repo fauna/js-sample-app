@@ -3,7 +3,10 @@ import { faunaClient } from "../../fauna/fauna-client";
 import { AbortError, fql, ServiceError, type DocumentT } from "fauna";
 import { Product } from "./products.model";
 import { removeInternalFields } from "../../fauna/util";
-import { validateProductCreate } from "../../middlewares/products";
+import {
+  validateProductCreate,
+  validateProductUpdate,
+} from "../../middlewares/products";
 
 const router = Router();
 
@@ -123,27 +126,29 @@ router.post(
 
 /**
  * Update an existing product.
- * @route {PATCH} /products/:name
+ * @route {PATCH} /products/:id
+ * @param id
  * @bodyparam price
  * @bodyparam description
  * @bodyparam stock
  * @bodyparam category
  * @returns Product
  */
-router.patch("/products/:id", async (req: Request, res: Response) => {
-  // Extract the id from the request parameters.
-  const { id } = req.params;
-  // Extract fields from the request body.
-  const { price, description, stock, category, name: bodyName } = req.body;
+router.patch(
+  "/products/:id",
+  validateProductUpdate,
+  async (req: Request, res: Response) => {
+    // Extract the id from the request parameters.
+    const { id } = req.params;
+    // Extract fields from the request body.
+    const { price, description, stock, category, name: bodyName } = req.body;
 
-  try {
-    const { data: product } = await faunaClient.query<DocumentT<Product>>(
-      fql`
+    try {
+      const { data: product } = await faunaClient.query<DocumentT<Product>>(
+        fql`
         // Get the product by name. We can use .first() here because we know that the product
         // name is unique.
-        let product: Any = Product.byId(${id})
-        // If the product does not exist, abort the transaction
-        if (product == null) abort("Product does not exist.")
+        let product: Any = Product.byId(${id})!
         // Get the category by name. We can use .first() here because we know that the category
         // name is unique.
         let category = Category.byName(${category ?? ""}).first()
@@ -161,20 +166,31 @@ router.patch("/products/:id", async (req: Request, res: Response) => {
           product!.update(fields) { name, price, description, stock, category: .category!.name }
         }
       `
-    );
+      );
 
-    return res.send(product);
-  } catch (error: any) {
-    // Handle errors returned by Fauna here.
-    if (error instanceof AbortError) {
-      // Handle any aborts we've defined in our FQl as 400s.
-      return res.status(400).send({ message: error.abort });
+      return res.send(product);
+    } catch (error: any) {
+      // Handle errors returned by Fauna here. AbortErrors are thrown when we use the
+      // abort function in our FQL query.
+      if (error instanceof AbortError) {
+        // Handle any aborts we've defined in our FQl as 400s.
+        return res.status(400).send({ message: error.abort });
+      }
+      // A ServiceError represents an error that occurred within Fauna.
+      if (error instanceof ServiceError) {
+        if (error.code === "document_not_found") {
+          // If the product does not exist, return a 404.
+          return res
+            .status(404)
+            .send({ message: `No product with id '${id}' exists.` });
+        }
+      }
+
+      return res
+        .status(500)
+        .send({ message: "The request failed unexpectedly.", error });
     }
-
-    return res
-      .status(500)
-      .send({ message: "The request failed unexpectedly.", error });
   }
-});
+);
 
 export default router;
