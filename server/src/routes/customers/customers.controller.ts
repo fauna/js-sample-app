@@ -108,7 +108,7 @@ router.post(
 );
 
 /**
- * Update a customer.
+ * Update an existing customer.
  * @route {PATCH} /customers/:id
  * @param id
  * @bodyparam name

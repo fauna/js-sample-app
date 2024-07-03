@@ -58,11 +58,16 @@ describe("Customers", () => {
 
   describe("POST /customers", () => {
     it("returns a 201 if the customer is created successfully", async () => {
+      // Create a new customer.
       const cust = mockCustomer();
       const res = await req(app).post("/customers").send(cust);
       customersToCleanup.push(res.body);
+      // Check that the response is correct.
       expect(res.status).toEqual(201);
       expect(res.body.email).toEqual(cust.email);
+      // Check that top level internal fields are removed.
+      expect(res.body.ts).toBeUndefined();
+      expect(res.body.coll).toBeUndefined();
     });
 
     it("returns a 400 if 'name' is missing or invalid", async () => {
@@ -140,6 +145,9 @@ describe("Customers", () => {
       expect(updateRes.body.name).toEqual("Alice");
       // Confirm the email did not change.
       expect(updateRes.body.email).toEqual(cust.email);
+      // Check that top level internal fields are removed.
+      expect(updateRes.body.ts).toBeUndefined();
+      expect(updateRes.body.coll).toBeUndefined();
     });
 
     it("returns a 400 if 'name' is invalid", async () => {
