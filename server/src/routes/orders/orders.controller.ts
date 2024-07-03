@@ -2,7 +2,7 @@ import { fql, AbortError, type DocumentT, type Page } from "fauna";
 import { Request, Response, Router } from "express";
 import { faunaClient } from "../../fauna/fauna-client";
 import { Order, OrderItem } from "./orders.model";
-import { validateOrderUpdate } from "../../middlewares";
+import { validateOrderUpdate } from "../../middlewares/orders";
 
 const router = Router();
 

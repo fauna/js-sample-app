@@ -27,8 +27,22 @@ describe("Customers", () => {
   describe("GET /customers/:id", () => {
     it("returns a 200 if the customer exists", async () => {
       const res = await req(app).get(`/customers/${customer.id}`);
+      // Check that the response is correct.
       expect(res.status).toEqual(200);
       expect(res.body.email).toEqual(customer.email);
+      // Check that top level internal fields are removed.
+      expect(res.body.ts).toBeUndefined();
+      expect(res.body.coll).toBeUndefined();
+      // Check that nested internal fields are removed.
+      expect(res.body.cart).toBeDefined();
+      expect(res.body.cart.ts).toBeUndefined();
+      expect(res.body.cart.coll).toBeUndefined();
+    });
+
+    it("returns a 400 if the id is invalid", async () => {
+      const res = await req(app).get("/customers/foobar");
+      expect(res.status).toEqual(400);
+      expect(res.body.message).toEqual("Invalid id 'foobar' provided.");
     });
 
     it("returns a 404 if the customer does not exist", async () => {
@@ -40,11 +54,67 @@ describe("Customers", () => {
 
   describe("POST /customers", () => {
     it("returns a 201 if the customer is created successfully", async () => {
+      // Create a new customer.
       const cust = mockCustomer();
       const res = await req(app).post("/customers").send(cust);
       customersToCleanup.push(res.body);
+      // Check that the response is correct.
       expect(res.status).toEqual(201);
       expect(res.body.email).toEqual(cust.email);
+      // Check that top level internal fields are removed.
+      expect(res.body.ts).toBeUndefined();
+      expect(res.body.coll).toBeUndefined();
+    });
+
+    it("returns a 400 if 'name' is missing or invalid", async () => {
+      const missingRes = await req(app)
+        .post("/customers")
+        .send({ ...mockCustomer(), name: undefined });
+      expect(missingRes.status).toEqual(400);
+      expect(missingRes.body.message).toEqual(
+        "Name must be a non-empty string."
+      );
+      const invalidRes = await req(app)
+        .post("/customers")
+        .send({ ...mockCustomer(), name: 123 });
+      expect(invalidRes.status).toEqual(400);
+      expect(invalidRes.body.message).toEqual(
+        "Name must be a non-empty string."
+      );
+    });
+
+    it("returns a 400 if 'email' is missing or invalid", async () => {
+      const missingRes = await req(app)
+        .post("/customers")
+        .send({ ...mockCustomer(), email: undefined });
+      expect(missingRes.status).toEqual(400);
+      expect(missingRes.body.message).toEqual(
+        "Email must be a non-empty string."
+      );
+      const invalidRes = await req(app)
+        .post("/customers")
+        .send({ ...mockCustomer(), email: 123 });
+      expect(invalidRes.status).toEqual(400);
+      expect(invalidRes.body.message).toEqual(
+        "Email must be a non-empty string."
+      );
+    });
+
+    it("returns a 400 if 'address' is missing or invalid", async () => {
+      const missingRes = await req(app)
+        .post("/customers")
+        .send({ ...mockCustomer(), address: undefined });
+      expect(missingRes.status).toEqual(400);
+      expect(missingRes.body.message).toEqual(
+        "Address must contain a street, city, state, postalCode and country represented as strings."
+      );
+      const invalidRes = await req(app)
+        .post("/customers")
+        .send({ ...mockCustomer(), address: 123 });
+      expect(invalidRes.status).toEqual(400);
+      expect(invalidRes.body.message).toEqual(
+        "Address must contain a street, city, state, postalCode and country represented as strings."
+      );
     });
 
     it("returns a 409 if the customer already exists", async () => {
@@ -61,8 +131,8 @@ describe("Customers", () => {
       // Create a new customer.
       const cust = mockCustomer();
       const createRes = await req(app).post("/customers").send(cust);
-      expect(createRes.status).toEqual(201);
       customersToCleanup.push(createRes.body);
+      expect(createRes.status).toEqual(201);
       // Update the customer's name to Alice.
       const updateRes = await req(app)
         .patch(`/customers/${createRes.body.id}`)
@@ -71,6 +141,39 @@ describe("Customers", () => {
       expect(updateRes.body.name).toEqual("Alice");
       // Confirm the email did not change.
       expect(updateRes.body.email).toEqual(cust.email);
+      // Check that top level internal fields are removed.
+      expect(updateRes.body.ts).toBeUndefined();
+      expect(updateRes.body.coll).toBeUndefined();
+    });
+
+    it("returns a 400 if 'name' is invalid", async () => {
+      const res = await req(app)
+        .patch("/customers/does-not-matter")
+        .send({ ...mockCustomer(), name: 123 });
+      expect(res.status).toEqual(400);
+      expect(res.body.message).toEqual(
+        "Name must be a non-empty string or be omitted."
+      );
+    });
+
+    it("returns a 400 if 'email' is invalid", async () => {
+      const res = await req(app)
+        .patch("/customers/does-not-matter")
+        .send({ ...mockCustomer(), email: 123 });
+      expect(res.status).toEqual(400);
+      expect(res.body.message).toEqual(
+        "Email must be a non-empty string or be omitted."
+      );
+    });
+
+    it("returns a 400 if 'address' is invalid", async () => {
+      const res = await req(app)
+        .patch("/customers/does-not-matter")
+        .send({ ...mockCustomer(), address: "foobar" });
+      expect(res.status).toEqual(400);
+      expect(res.body.message).toEqual(
+        "Address must contain a street, city, state, postalCode and country represented as strings or be omitted."
+      );
     });
 
     it("returns a 404 if the customer does not exist", async () => {
@@ -83,8 +186,8 @@ describe("Customers", () => {
       // Create a new customer.
       const cust = mockCustomer();
       const createRes = await req(app).post("/customers").send(cust);
-      expect(createRes.status).toEqual(201);
       customersToCleanup.push(createRes.body);
+      expect(createRes.status).toEqual(201);
       // Try to update the customer's email to an existing email.
       const updateRes = await req(app)
         .patch(`/customers/${createRes.body.id}`)
