@@ -25,91 +25,180 @@ describe("Products", () => {
   });
 
   describe("GET /products", () => {
-    it("Gets all products", async () => {
-      const res = await req(app).get(`/products`);
+    it("gets all products", async () => {
+      const res = await req(app).get("/products");
       expect(res.status).toEqual(200);
-      expect(res.body.results.length).toBeGreaterThan(0);
+      expect(res.body.results.length).toBeGreaterThanOrEqual(products.length);
+      // Check that internal fields are removed.
+      for (const product of res.body.results) {
+        // Check that top level internal fields are removed.
+        expect(product.ts).toBeUndefined();
+        expect(product.coll).toBeUndefined();
+        // Check that nested internal fields are removed.
+        expect(product.category).toBeDefined();
+        expect(product.category.ts).toBeUndefined();
+        expect(product.category.coll).toBeUndefined();
+      }
     });
 
-    it("Gets products for a specific category", async () => {
-      const res = await req(app).get(`/products?category=books`);
+    it("gets products for a specific category", async () => {
+      const res = await req(app).get("/products?category=books");
       const expectedProducts = new Set(
         products
-          .filter((p) => p.category === "books")
+          .filter((p) => p.category.name === "books")
           .map((p) => JSON.stringify({ ...p, category: "books" }))
       );
       expect(res.status).toEqual(200);
-      expect(res.body.nextToken).toBeUndefined();
       for (const product of res.body.results) {
-        expect(expectedProducts.has(JSON.stringify(product))).toBe(true);
+        expect(product.category.name).toEqual("books");
       }
       expect(res.body.results.length).toEqual(expectedProducts.size);
+    });
+
+    it("can paginate the list of products", async () => {
+      // Get the first page of orders.
+      const firstResp = await req(app).get("/products?pageSize=1");
+      expect(firstResp.status).toEqual(200);
+      expect(firstResp.body.results.length).toEqual(1);
+      // Get the second page of orders
+      const secondResp = await req(app).get(
+        `/products?nextToken=${firstResp.body.nextToken}`
+      );
+      expect(secondResp.status).toEqual(200);
+      expect(secondResp.body.results.length).toEqual(1);
+      // Ensure the orders returned are different.
+      expect(firstResp.body.results[0].name).not.toEqual(
+        secondResp.body.results[0].name
+      );
+    });
+
+    it("returns a 400 if 'pageSize' is invalid", async () => {
+      const notANumberRes = await req(app).get(
+        "/products?pageSize=not-a-number"
+      );
+      expect(notANumberRes.status).toEqual(400);
+      expect(notANumberRes.body.message).toEqual(
+        "Page size must be a positive integer or be omitted."
+      );
+      const negativeNumberRes = await req(app).get("/products?pageSize=-1");
+      expect(negativeNumberRes.status).toEqual(400);
+      expect(negativeNumberRes.body.message).toEqual(
+        "Page size must be a positive integer or be omitted."
+      );
     });
   });
 
   describe("POST /products", () => {
-    it("Creates a product", async () => {
+    it("creates a product", async () => {
+      // Create a new product.
       const product = mockProduct({ category: "electronics" });
       const res = await req(app).post(`/products`).send(product);
       productsToCleanup.push(res.body);
+      // Check that the product was created successfully.
       expect(res.status).toEqual(201);
       expect(res.body.name).toEqual(product.name);
+      // Check that top level internal fields are removed.
+      expect(res.body.ts).toBeUndefined();
+      expect(res.body.coll).toBeUndefined();
+      // Check that nested internal fields are removed.
+      expect(res.body.category).toBeDefined();
+      expect(res.body.category.ts).toBeUndefined();
+      expect(res.body.category.coll).toBeUndefined();
     });
 
-    it("Returns a 400 if the name is missing", async () => {
+    it("returns a 400 if 'name' is missing or invalid", async () => {
       const { name, ...rest } = mockProduct({ category: "electronics" });
-      const res = await req(app).post(`/products`).send(rest);
-      expect(res.status).toEqual(400);
-      expect(res.body.message).toEqual("Name must be a non-empty string.");
+      const missingRes = await req(app).post(`/products`).send(rest);
+      expect(missingRes.status).toEqual(400);
+      expect(missingRes.body.message).toEqual(
+        "Name must be a non-empty string."
+      );
+      const invalidRes = await req(app)
+        .post(`/products`)
+        .send({ ...rest, name: 123 });
+      expect(invalidRes.status).toEqual(400);
+      expect(invalidRes.body.message).toEqual(
+        "Name must be a non-empty string."
+      );
     });
 
-    it("Returns a 400 if the price is missing", async () => {
+    it("returns a 400 if 'price' is missing or invalid", async () => {
       const { price, ...rest } = mockProduct({ category: "electronics" });
-      const res = await req(app).post(`/products`).send(rest);
-      expect(res.status).toEqual(400);
-      expect(res.body.message).toEqual(
+      const missingRes = await req(app).post(`/products`).send(rest);
+      expect(missingRes.status).toEqual(400);
+      expect(missingRes.body.message).toEqual(
+        "Price must be a number greater than 0."
+      );
+      const invalidRes = await req(app)
+        .post(`/products`)
+        .send({ ...rest, price: "foo" });
+      expect(invalidRes.status).toEqual(400);
+      expect(invalidRes.body.message).toEqual(
         "Price must be a number greater than 0."
       );
     });
 
-    it("Returns a 400 if the description is missing", async () => {
+    it("returns a 400 if 'description' is missing or invalid", async () => {
       const { description, ...rest } = mockProduct({ category: "electronics" });
-      const res = await req(app).post(`/products`).send(rest);
-      expect(res.status).toEqual(400);
-      expect(res.body.message).toEqual(
+      const missingRes = await req(app).post(`/products`).send(rest);
+      expect(missingRes.status).toEqual(400);
+      expect(missingRes.body.message).toEqual(
+        "Description must be a non-empty string."
+      );
+      const invalidRes = await req(app)
+        .post(`/products`)
+        .send({ ...rest, description: 123 });
+      expect(invalidRes.status).toEqual(400);
+      expect(invalidRes.body.message).toEqual(
         "Description must be a non-empty string."
       );
     });
 
-    it("Returns a 400 if the stock is missing", async () => {
+    it("returns a 400 if 'stock' is missing or invalid", async () => {
       const { stock, ...rest } = mockProduct({ category: "electronics" });
-      const res = await req(app).post(`/products`).send(rest);
-      expect(res.status).toEqual(400);
-      expect(res.body.message).toEqual(
+      const missingRes = await req(app).post(`/products`).send(rest);
+      expect(missingRes.status).toEqual(400);
+      expect(missingRes.body.message).toEqual(
+        "Stock must be a number greater than or equal to 0."
+      );
+      const invalidRes = await req(app)
+        .post(`/products`)
+        .send({ ...rest, stock: -1 });
+      expect(invalidRes.status).toEqual(400);
+      expect(invalidRes.body.message).toEqual(
         "Stock must be a number greater than or equal to 0."
       );
     });
 
-    it("Returns a 400 if the category is missing", async () => {
+    it("returns a 400 if 'category' is missing or invalid", async () => {
       const { category, ...rest } = mockProduct();
-      const res = await req(app).post(`/products`).send(rest);
-      expect(res.status).toEqual(400);
-      expect(res.body.message).toEqual("Category must be a non-empty string.");
+      const missingRes = await req(app).post(`/products`).send(rest);
+      expect(missingRes.status).toEqual(400);
+      expect(missingRes.body.message).toEqual(
+        "Category must be a non-empty string."
+      );
+      const invalidRes = await req(app)
+        .post(`/products`)
+        .send({ ...rest, category: 123 });
+      expect(invalidRes.status).toEqual(400);
+      expect(invalidRes.body.message).toEqual(
+        "Category must be a non-empty string."
+      );
     });
 
-    it("Returns a 400 if the category does not exist", async () => {
+    it("returns a 400 if the category does not exist", async () => {
       const product = mockProduct();
       const res = await req(app)
         .post(`/products`)
-        .send({ ...product, category: "non-existent" });
+        .send({ ...product, category: "does not exist" });
       expect(res.status).toEqual(400);
       expect(res.body.message).toEqual("Category does not exist.");
     });
 
-    it("Returns a 409 if the product already exists", async () => {
+    it("returns a 409 if the product already exists", async () => {
       const res = await req(app)
         .post(`/products`)
-        .send({ ...products[0] });
+        .send({ ...products[0], category: "electronics" });
       expect(res.status).toEqual(409);
       expect(res.body.message).toEqual(
         "A product with that name already exists."
@@ -118,29 +207,55 @@ describe("Products", () => {
   });
 
   describe("PATCH /products/:name", () => {
-    it("Updates a product", async () => {
+    it("updates a product", async () => {
+      // Create a new product.
       const product = mockProduct({ price: 10.99, category: "electronics" });
       const createRes = await req(app).post(`/products`).send(product);
+      productsToCleanup.push(createRes.body);
+      // Check that the product was created successfully.
       expect(createRes.status).toEqual(201);
       expect(createRes.body.price).toEqual(10.99);
-      productsToCleanup.push(createRes.body);
+      // Update the product.
       const updateRes = await req(app)
-        .patch(`/products/${product.name}`)
+        .patch(`/products/${createRes.body.id}`)
         .send({ price: 19.99 });
+      // Check that the product was updated successfully.
       expect(updateRes.status).toEqual(200);
       expect(updateRes.body.price).toEqual(19.99);
       expect(updateRes.body.name).toEqual(product.name);
+      // Check that top level internal fields are removed.
+      expect(updateRes.body.ts).toBeUndefined();
+      expect(updateRes.body.coll).toBeUndefined();
+      // Check that nested internal fields are removed.
+      expect(updateRes.body.category).toBeDefined();
+      expect(updateRes.body.category.ts).toBeUndefined();
+      expect(updateRes.body.category.coll).toBeUndefined;
     });
 
-    it("Returns a 400 if the product does not exist", async () => {
-      const res = await req(app)
-        .patch(`/products/notarealproduct`)
-        .send({ price: 19.99 });
-      expect(res.status).toEqual(400);
-      expect(res.body.message).toEqual("Product does not exist.");
+    it("returns a 404 if the product does not exist", async () => {
+      const res = await req(app).patch(`/products/1234`).send({ price: 19.99 });
+      expect(res.status).toEqual(404);
+      expect(res.body.message).toEqual("No product with id '1234' exists.");
     });
 
-    it("Returns a 400 if the price is invalid", async () => {
+    it("returns a 400 if 'name' is invalid", async () => {
+      const nameAsNumber = await req(app)
+        .patch("/products/does-not-matter")
+        .send({ name: 123 });
+      expect(nameAsNumber.status).toEqual(400);
+      expect(nameAsNumber.body.message).toEqual(
+        "Name must be a non-empty string or be omitted."
+      );
+      const nameAsEmptyString = await req(app)
+        .patch("/products/does-not-matter")
+        .send({ name: "" });
+      expect(nameAsEmptyString.status).toEqual(400);
+      expect(nameAsEmptyString.body.message).toEqual(
+        "Name must be a non-empty string or be omitted."
+      );
+    });
+
+    it("returns a 400 if 'price' is invalid", async () => {
       const priceAsString = await req(app)
         .patch("/products/does-not-matter")
         .send({ price: "not a number" });
@@ -157,7 +272,7 @@ describe("Products", () => {
       );
     });
 
-    it("Returns a 400 if the stock is invalid", async () => {
+    it("returns a 400 if 'stock' is invalid", async () => {
       const stockAsString = await req(app)
         .patch("/products/does-not-matter")
         .send({ stock: "not a number" });
@@ -174,7 +289,7 @@ describe("Products", () => {
       );
     });
 
-    it("Returns a 400 if the category is invalid", async () => {
+    it("returns a 400 if 'category' is invalid", async () => {
       const categoryAsString = await req(app)
         .patch("/products/does-not-matter")
         .send({ category: 123 });
@@ -184,7 +299,7 @@ describe("Products", () => {
       );
     });
 
-    it("Returns a 400 if the description is invalid", async () => {
+    it("returns a 400 if 'description' is invalid", async () => {
       const descriptionAsNumber = await req(app)
         .patch("/products/does-not-matter")
         .send({ description: 123 });
@@ -194,13 +309,21 @@ describe("Products", () => {
       );
     });
 
-    it("Returns a 400 if attempting to update the product name", async () => {
-      const nameAsNumber = await req(app)
-        .patch("/products/foo")
-        .send({ name: "bar" });
-      expect(nameAsNumber.status).toEqual(400);
-      expect(nameAsNumber.body.message).toEqual(
-        "Name cannot be updated. Please create a new product instead."
+    it("returns a 409 if a product with the same name already exists", async () => {
+      // Create a new product.
+      const product = mockProduct({ category: "electronics" });
+      const createRes = await req(app).post(`/products`).send(product);
+      productsToCleanup.push(createRes.body);
+      // Check that the product was created successfully.
+      expect(createRes.status).toEqual(201);
+      // Try to create another product with the same name.
+      const updateRes = await req(app)
+        .patch(`/products/${createRes.body.id}`)
+        .send({ name: products[0].name });
+      // Check that the product was not updated.
+      expect(updateRes.status).toEqual(409);
+      expect(updateRes.body.message).toEqual(
+        "A product with that name already exists."
       );
     });
   });

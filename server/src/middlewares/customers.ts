@@ -49,15 +49,18 @@ export const validateCustomerUpdate = (
 
   // Validate the fields in the request body. They must
   // be valid if they are present.
-  if (name && typeof name !== "string") {
+  if (name !== undefined && (typeof name !== "string" || name.length === 0)) {
     return res.status(400).send({
       message: "Name must be a non-empty string or be omitted.",
     });
-  } else if (email && typeof email !== "string") {
+  } else if (
+    email !== undefined &&
+    (typeof email !== "string" || email.length === 0)
+  ) {
     return res.status(400).send({
       message: "Email must be a non-empty string or be omitted.",
     });
-  } else if (address && !addressIsValid(address)) {
+  } else if (address !== undefined && !addressIsValid(address)) {
     return res.status(400).send({
       message:
         "Address must contain a street, city, state, postalCode and country represented as strings or be omitted.",
