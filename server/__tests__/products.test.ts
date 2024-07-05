@@ -25,35 +25,61 @@ describe("Products", () => {
   });
 
   describe("GET /products", () => {
-    it("Gets all products", async () => {
-      const res = await req(app).get(`/products`);
+    it("gets all products", async () => {
+      const res = await req(app).get("/products");
       expect(res.status).toEqual(200);
-      expect(res.body.results.length).toBeGreaterThan(0);
+      expect(res.body.results.length).toBeGreaterThanOrEqual(products.length);
     });
 
-    it("Gets products for a specific category", async () => {
-      const res = await req(app).get(`/products?category=books`);
+    it("gets products for a specific category", async () => {
+      const res = await req(app).get("/products?category=books");
       const expectedProducts = new Set(
         products
           .filter((p) => p.category.name === "books")
           .map((p) => JSON.stringify({ ...p, category: "books" }))
       );
       expect(res.status).toEqual(200);
-      expect(res.body.nextToken).toBeUndefined();
       for (const product of res.body.results) {
-        // expect(expectedProducts.has(expect.objectContaining(product))).toBe(
-        //   true
-        // );
-        expect(expectedProducts).toEqual(
-          expect.arrayContaining([expect.objectContaining(product)])
-        );
+        expect(product.category.name).toEqual("books");
       }
       expect(res.body.results.length).toEqual(expectedProducts.size);
+    });
+
+    it("can paginate the list of products", async () => {
+      // Get the first page of orders.
+      const firstResp = await req(app).get("/products?pageSize=1");
+      expect(firstResp.status).toEqual(200);
+      expect(firstResp.body.results.length).toEqual(1);
+      // Get the second page of orders
+      const secondResp = await req(app).get(
+        `/products?nextToken=${firstResp.body.nextToken}`
+      );
+      expect(secondResp.status).toEqual(200);
+      expect(secondResp.body.results.length).toEqual(1);
+      // Ensure the orders returned are different.
+      expect(firstResp.body.results[0].name).not.toEqual(
+        secondResp.body.results[0].name
+      );
+    });
+
+    it("returns a 400 if 'pageSize' is invalid", async () => {
+      const notANumberRes = await req(app).get(
+        "/products?pageSize=not-a-number"
+      );
+      expect(notANumberRes.status).toEqual(400);
+      expect(notANumberRes.body.message).toEqual(
+        "Page size must be a positive integer or be omitted."
+      );
+      const negativeNumberRes = await req(app).get("/products?pageSize=-1");
+      expect(negativeNumberRes.status).toEqual(400);
+      expect(negativeNumberRes.body.message).toEqual(
+        "Page size must be a positive integer or be omitted."
+      );
     });
   });
 
   describe("POST /products", () => {
-    it("Creates a product", async () => {
+    it("creates a product", async () => {
       // Create a new product.
       const product = mockProduct({ category: "electronics" });
       const res = await req(app).post(`/products`).send(product);
@@ -70,7 +96,7 @@ describe("Products", () => {
       expect(res.body.category.coll).toBeUndefined();
     });
 
-    it("Returns a 400 if 'name' is missing or invalid", async () => {
+    it("returns a 400 if 'name' is missing or invalid", async () => {
       const { name, ...rest } = mockProduct({ category: "electronics" });
       const missingRes = await req(app).post(`/products`).send(rest);
       expect(missingRes.status).toEqual(400);
@@ -86,7 +112,7 @@ describe("Products", () => {
       );
     });
 
-    it("Returns a 400 if 'price' is missing or invalid", async () => {
+    it("returns a 400 if 'price' is missing or invalid", async () => {
       const { price, ...rest } = mockProduct({ category: "electronics" });
       const missingRes = await req(app).post(`/products`).send(rest);
       expect(missingRes.status).toEqual(400);
@@ -102,7 +128,7 @@ describe("Products", () => {
       );
     });
 
-    it("Returns a 400 if 'description' is missing or invalid", async () => {
+    it("returns a 400 if 'description' is missing or invalid", async () => {
       const { description, ...rest } = mockProduct({ category: "electronics" });
       const missingRes = await req(app).post(`/products`).send(rest);
       expect(missingRes.status).toEqual(400);
@@ -118,7 +144,7 @@ describe("Products", () => {
       );
     });
 
-    it("Returns a 400 if 'stock' is missing or invalid", async () => {
+    it("returns a 400 if 'stock' is missing or invalid", async () => {
       const { stock, ...rest } = mockProduct({ category: "electronics" });
       const missingRes = await req(app).post(`/products`).send(rest);
       expect(missingRes.status).toEqual(400);
@@ -134,7 +160,7 @@ describe("Products", () => {
       );
     });
 
-    it("Returns a 400 if 'category' is missing or invalid", async () => {
+    it("returns a 400 if 'category' is missing or invalid", async () => {
       const { category, ...rest } = mockProduct();
       const missingRes = await req(app).post(`/products`).send(rest);
       expect(missingRes.status).toEqual(400);
@@ -150,7 +176,7 @@ describe("Products", () => {
       );
     });
 
-    it("Returns a 400 if the category does not exist", async () => {
+    it("returns a 400 if the category does not exist", async () => {
       const product = mockProduct();
       const res = await req(app)
         .post(`/products`)
@@ -159,7 +185,7 @@ describe("Products", () => {
       expect(res.body.message).toEqual("Category does not exist.");
     });
 
-    it("Returns a 409 if the product already exists", async () => {
+    it("returns a 409 if the product already exists", async () => {
       const res = await req(app)
         .post(`/products`)
         .send({ ...products[0], category: "electronics" });
@@ -171,7 +197,7 @@ describe("Products", () => {
   });
 
   describe("PATCH /products/:name", () => {
-    it("Updates a product", async () => {
+    it("updates a product", async () => {
       // Create a new product.
       const product = mockProduct({ price: 10.99, category: "electronics" });
       const createRes = await req(app).post(`/products`).send(product);
@@ -196,13 +222,13 @@ describe("Products", () => {
       expect(updateRes.body.category.coll).toBeUndefined;
     });
 
-    it("Returns a 404 if the product does not exist", async () => {
+    it("returns a 404 if the product does not exist", async () => {
       const res = await req(app).patch(`/products/1234`).send({ price: 19.99 });
       expect(res.status).toEqual(404);
       expect(res.body.message).toEqual("No product with id '1234' exists.");
     });
 
-    it("Returns a 400 if 'name' is invalid", async () => {
+    it("returns a 400 if 'name' is invalid", async () => {
       const nameAsNumber = await req(app)
         .patch("/products/does-not-matter")
         .send({ name: 123 });
@@ -219,7 +245,7 @@ describe("Products", () => {
       );
     });
 
-    it("Returns a 400 if 'price' is invalid", async () => {
+    it("returns a 400 if 'price' is invalid", async () => {
       const priceAsString = await req(app)
         .patch("/products/does-not-matter")
         .send({ price: "not a number" });
@@ -236,7 +262,7 @@ describe("Products", () => {
       );
     });
 
-    it("Returns a 400 if 'stock' is invalid", async () => {
+    it("returns a 400 if 'stock' is invalid", async () => {
       const stockAsString = await req(app)
         .patch("/products/does-not-matter")
         .send({ stock: "not a number" });
@@ -253,7 +279,7 @@ describe("Products", () => {
       );
     });
 
-    it("Returns a 400 if 'category' is invalid", async () => {
+    it("returns a 400 if 'category' is invalid", async () => {
       const categoryAsString = await req(app)
         .patch("/products/does-not-matter")
         .send({ category: 123 });
@@ -263,7 +289,7 @@ describe("Products", () => {
       );
     });
 
-    it("Returns a 400 if 'description' is invalid", async () => {
+    it("returns a 400 if 'description' is invalid", async () => {
       const descriptionAsNumber = await req(app)
         .patch("/products/does-not-matter")
         .send({ description: 123 });
@@ -273,7 +299,7 @@ describe("Products", () => {
       );
     });
 
-    it("Returns a 409 if a product with the same name already exists", async () => {
+    it("returns a 409 if a product with the same name already exists", async () => {
       // Create a new product.
       const product = mockProduct({ category: "electronics" });
       const createRes = await req(app).post(`/products`).send(product);

@@ -2,6 +2,7 @@ import { Request, Response, Router } from "express";
 import { faunaClient } from "../../fauna/fauna-client";
 import { AbortError, fql, ServiceError, type DocumentT, Page } from "fauna";
 import { Product } from "./products.model";
+import { PaginatedRequest } from "../../types";
 import { removeInternalFields } from "../../fauna/util";
 import {
   validateGetProducts,
@@ -13,42 +14,45 @@ const router = Router();
 
 /**
  * Get a page of products. If a category query parameter is provided, return only products in that category.
- * @route {GET} /products
+ * If no category query parameter is provided, return all products. The results are paginated with a default
+ * page size of 10. If a nextToken is provided, return the next page of products corresponding to that token.
+ * @route {POST} /products
  * @queryparam category
  * @returns { results: Product[], nextToken: string }
  */
 router.get(
   "/products",
   validateGetProducts,
-  async (req: Request, res: Response) => {
+  async (req: PaginatedRequest<{ category?: string }>, res: Response) => {
     // Extract the category query parameter from the request.
-    const { category } = req.query;
-    // Cast the category query parameter to a string or undefined. We have already validated
-    // the category query parameter in the validateGetProducts middleware.
-    const categoryString = category as string | undefined;
+    const { category, nextToken = undefined, pageSize = 10 } = req.query;
+
+    // Convert the pageSize query parameter to a number. Page size has
+    // already been validated in the validateGetProducts middleware.
+    const pageSizeNumber = Number(pageSize);
 
     try {
       // Define an FQL query fragment that will return a page of products. We use the fql template
       // tag to define the query fragment. The fql template tag is a tagged template literal that
       // allows us to write FQL queries using a JavaScript template string. We will use
       // this que ry fragment later in our main query.
-      const query =
-        categoryString === undefined
+      const queryFragment =
+        category === undefined
           ? // If the category query parameter is not provided, return all products sorted by category
             // using the sortedByCategory index.
-            fql`Product.sortedByCategory()`
+            fql`Product.sortedByCategory().pageSize(${pageSizeNumber})`
           : // If the category query parameter is provided, return all products in that category
             // using the byCategory index.
-            fql`Product.byCategory(Category.byName(${categoryString}).first())`;
+            fql`Product.byCategory(Category.byName(${category}).first()).pageSize(${pageSizeNumber})`;
 
-      // Note that the query return type does not need to be wrapped in a DocumentT type because
-      // we are picking out the fields we want to return in the map function below as opposed to
-      // returning the entire document.
-      const { data: page } = await faunaClient.query<Page<Product>>(fql`
-        ${query}
+      // Define the main query. This query will return a page of products using the query fragment
+      // defined above.
+      const query = fql`
+        ${queryFragment}
         // Return just the Product data we want to display to the user
         // by mapping over the data and returning a new object with the desired fields.
         .map(product => {
+          let product: Any = product
           let category: Any = product.category
           {
             id: product.id,
@@ -59,7 +63,16 @@ router.get(
             category: { id: category.id, name: category.name, description: category.description },
           }
         })
-      `);
+      `;
+
+      // Note that the query return type does not need to be wrapped in a DocumentT type because
+      // we are picking out the fields we want to return in the map function below as opposed to
+      // returning the entire document.
+      const { data: page } = await faunaClient.query<Page<Product>>(
+        // If a nextToken is provided, use the Set.paginate function to get the next page of products.
+        // Otherwise, use the query defined above which will fetch the first page of products.
+        nextToken ? fql`Set.paginate(${nextToken})` : query
+      );
 
       // Return the page of products and the next token to the user. The next token can be passed back to
       // the server to retrieve the next page of products.
