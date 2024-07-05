@@ -18,6 +18,8 @@ const router = Router();
  * page size of 10. If a nextToken is provided, return the next page of products corresponding to that token.
  * @route {POST} /products
  * @queryparam category
+ * @queryparam nextToken
+ * @queryparam pageSize
  * @returns { results: Product[], nextToken: string }
  */
 router.get(
@@ -32,10 +34,10 @@ router.get(
     const pageSizeNumber = Number(pageSize);
 
     try {
-      // Define an FQL query fragment that will return a page of products. We use the fql template
-      // tag to define the query fragment. The fql template tag is a tagged template literal that
-      // allows us to write FQL queries using a JavaScript template string. We will use
-      // this que ry fragment later in our main query.
+      // Define an FQL query fragment that will return a page of products. This query
+      // fragment will either return all products sorted by category or all products in a specific
+      // category depending on whether the category query parameter is provided. This will later
+      // be embedded in a larger query.
       const queryFragment =
         category === undefined
           ? // If the category query parameter is not provided, return all products sorted by category
@@ -49,8 +51,9 @@ router.get(
       // defined above.
       const query = fql`
         ${queryFragment}
-        // Return just the Product data we want to display to the user
-        // by mapping over the data and returning a new object with the desired fields.
+        // Return only the fields we want to display to the user
+        // by mapping over the data returned by the index and returning a
+        // new object with the desired fields.
         .map(product => {
           let product: Any = product
           let category: Any = product.category
@@ -66,7 +69,7 @@ router.get(
       `;
 
       // Note that the query return type does not need to be wrapped in a DocumentT type because
-      // we are picking out the fields we want to return in the map function below as opposed to
+      // we are picking out the fields we want to return in the query itself as opposed to
       // returning the entire document.
       const { data: page } = await faunaClient.query<Page<Product>>(
         // If a nextToken is provided, use the Set.paginate function to get the next page of products.
