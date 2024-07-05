@@ -1,58 +1,75 @@
 import { Request, Response, Router } from "express";
 import { faunaClient } from "../../fauna/fauna-client";
-import { AbortError, fql, ServiceError, type DocumentT } from "fauna";
+import { AbortError, fql, ServiceError, type DocumentT, Page } from "fauna";
 import { Product } from "./products.model";
 import { removeInternalFields } from "../../fauna/util";
 import {
+  validateGetProducts,
   validateProductCreate,
   validateProductUpdate,
 } from "../../middlewares/products";
 
 const router = Router();
 
-router.get("/products", async (req: Request, res: Response) => {
-  const { category } = req.query;
-  if (category !== undefined && typeof category !== "string") {
-    return res.status(400).json({
-      message: "Category must be a string or be omitted.",
-    });
+/**
+ * Get a page of products. If a category query parameter is provided, return only products in that category.
+ * @route {GET} /products
+ * @queryparam category
+ * @returns { results: Product[], nextToken: string }
+ */
+router.get(
+  "/products",
+  validateGetProducts,
+  async (req: Request, res: Response) => {
+    // Extract the category query parameter from the request.
+    const { category } = req.query;
+    // Cast the category query parameter to a string or undefined. We have already validated
+    // the category query parameter in the validateGetProducts middleware.
+    const categoryString = category as string | undefined;
+
+    try {
+      // Define an FQL query fragment that will return a page of products. We use the fql template
+      // tag to define the query fragment. The fql template tag is a tagged template literal that
+      // allows us to write FQL queries using a JavaScript template string. We will use
+      // this que ry fragment later in our main query.
+      const query =
+        categoryString === undefined
+          ? // If the category query parameter is not provided, return all products sorted by category
+            // using the sortedByCategory index.
+            fql`Product.sortedByCategory()`
+          : // If the category query parameter is provided, return all products in that category
+            // using the byCategory index.
+            fql`Product.byCategory(Category.byName(${categoryString}).first())`;
+
+      // Note that the query return type does not need to be wrapped in a DocumentT type because
+      // we are picking out the fields we want to return in the map function below as opposed to
+      // returning the entire document.
+      const { data: page } = await faunaClient.query<Page<Product>>(fql`
+        ${query}
+        // Return just the Product data we want to display to the user
+        // by mapping over the data and returning a new object with the desired fields.
+        .map(product => {
+          let category: Any = product.category
+          {
+            id: product.id,
+            name: product.name,
+            price: product.price,
+            description: product.description,
+            stock: product.stock,
+            category: { id: category.id, name: category.name, description: category.description },
+          }
+        })
+      `);
+
+      // Return the page of products and the next token to the user. The next token can be passed back to
+      // the server to retrieve the next page of products.
+      return res.json({ results: page.data, nextToken: page.after });
+    } catch (error: any) {
+      // Return a generic 500 if we encounter an unexpected error.
+      return res.status(500).send({ message: "Internal Server Error" });
+    }
   }
-
-  try {
-    const query =
-      category === undefined
-        ? fql`Product.sortedByCategory()`
-        : fql`Product.byCategory(Category.byName(${category}).first())`;
-
-    const products = await faunaClient.query<{
-      data: Product[];
-      after: string;
-    }>(fql`
-      ${query}
-      // just return the Product data we want to display to the user
-      .map(product => {
-        let category: Any = product.category
-       {
-         name: product.name,
-         price: product.price,
-         description: product.description,
-         stock: product.stock,
-         category: category?.name,
-       }
-      })
-    `);
-
-    return res.json({
-      results: products.data.data,
-      nextToken: products.data.after,
-    });
-  } catch (e) {
-    console.error(e);
-    return res.status(500).json({
-      message: "Internal Server Error",
-    });
-  }
-});
+);
 
 /**
  * Create a new product.

@@ -24,33 +24,33 @@ describe("Products", () => {
     faunaClient.close();
   });
 
-  // describe("GET /products", () => {
-  //   it("Gets all products", async () => {
-  //     const res = await req(app).get(`/products`);
-  //     expect(res.status).toEqual(200);
-  //     expect(res.body.results.length).toBeGreaterThan(0);
-  //   });
+  describe("GET /products", () => {
+    it("Gets all products", async () => {
+      const res = await req(app).get(`/products`);
+      expect(res.status).toEqual(200);
+      expect(res.body.results.length).toBeGreaterThan(0);
+    });
 
-  //   it("Gets products for a specific category", async () => {
-  //     const res = await req(app).get(`/products?category=books`);
-  //     const expectedProducts = new Set(
-  //       products
-  //         .filter((p) => p.category.name === "books")
-  //         .map((p) => JSON.stringify({ ...p, category: "books" }))
-  //     );
-  //     expect(res.status).toEqual(200);
-  //     expect(res.body.nextToken).toBeUndefined();
-  //     for (const product of res.body.results) {
-  //       // expect(expectedProducts.has(expect.objectContaining(product))).toBe(
-  //       //   true
-  //       // );
-  //       expect(expectedProducts).toEqual(
-  //         expect.arrayContaining([expect.objectContaining(product)])
-  //       );
-  //     }
-  //     expect(res.body.results.length).toEqual(expectedProducts.size);
-  //   });
-  // });
+    it("Gets products for a specific category", async () => {
+      const res = await req(app).get(`/products?category=books`);
+      const expectedProducts = new Set(
+        products
+          .filter((p) => p.category.name === "books")
+          .map((p) => JSON.stringify({ ...p, category: "books" }))
+      );
+      expect(res.status).toEqual(200);
+      expect(res.body.nextToken).toBeUndefined();
+      for (const product of res.body.results) {
+        // expect(expectedProducts.has(expect.objectContaining(product))).toBe(
+        //   true
+        // );
+        expect(expectedProducts).toEqual(
+          expect.arrayContaining([expect.objectContaining(product)])
+        );
+      }
+      expect(res.body.results.length).toEqual(expectedProducts.size);
+    });
+  });
 
   describe("POST /products", () => {
     it("Creates a product", async () => {

@@ -10,6 +10,7 @@ export interface Product extends QueryValueObject {
 }
 
 export interface Category extends QueryValueObject {
+  id: string;
   name: string;
   description: string;
 }

@@ -92,7 +92,11 @@ export const seedTestData = async () => {
       products.push({
         id: "does-not-matter",
         ...product,
-        category: { name: category, description: `Bargin ${category}!` },
+        category: {
+          id: "does-not-matter",
+          name: category,
+          description: `Bargin ${category}!`,
+        },
       });
       productCreates.push(
         faunaClient.query<Product>(fql`
