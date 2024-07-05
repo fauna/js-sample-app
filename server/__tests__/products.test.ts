@@ -29,6 +29,16 @@ describe("Products", () => {
       const res = await req(app).get("/products");
       expect(res.status).toEqual(200);
       expect(res.body.results.length).toBeGreaterThanOrEqual(products.length);
+      // Check that internal fields are removed.
+      for (const product of res.body.results) {
+        // Check that top level internal fields are removed.
+        expect(product.ts).toBeUndefined();
+        expect(product.coll).toBeUndefined();
+        // Check that nested internal fields are removed.
+        expect(product.category).toBeDefined();
+        expect(product.category.ts).toBeUndefined();
+        expect(product.category.coll).toBeUndefined();
+      }
     });
 
     it("gets products for a specific category", async () => {
