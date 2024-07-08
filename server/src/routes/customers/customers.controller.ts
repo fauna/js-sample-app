@@ -6,7 +6,7 @@ import { removeInternalFields } from "../../fauna/util";
 import {
   validateCustomerCreate,
   validateCustomerUpdate,
-} from "../../middlewares/customers";
+} from "../../middleware/customers";
 
 const router = Router();
 

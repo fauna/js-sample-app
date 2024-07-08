@@ -1,6 +1,12 @@
 import { Request, Response, Router } from "express";
 import { faunaClient } from "../../fauna/fauna-client";
-import { AbortError, fql, ServiceError, type DocumentT, Page } from "fauna";
+import {
+  AbortError,
+  fql,
+  ServiceError,
+  type DocumentT,
+  type Page,
+} from "fauna";
 import { Product } from "./products.model";
 import { PaginatedRequest } from "../../types";
 import { removeInternalFields } from "../../fauna/util";
@@ -8,7 +14,7 @@ import {
   validateGetProducts,
   validateProductCreate,
   validateProductUpdate,
-} from "../../middlewares/products";
+} from "../../middleware/products";
 
 const router = Router();
 
@@ -16,7 +22,7 @@ const router = Router();
  * Get a page of products. If a category query parameter is provided, return only products in that category.
  * If no category query parameter is provided, return all products. The results are paginated with a default
  * page size of 10. If a nextToken is provided, return the next page of products corresponding to that token.
- * @route {POST} /products
+ * @route {GET} /products
  * @queryparam category
  * @queryparam nextToken
  * @queryparam pageSize
@@ -79,7 +85,9 @@ router.get(
 
       // Return the page of products and the next token to the user. The next token can be passed back to
       // the server to retrieve the next page of products.
-      return res.json({ results: page.data, nextToken: page.after });
+      return res
+        .status(200)
+        .send({ results: page.data, nextToken: page.after });
     } catch (error: any) {
       // Return a generic 500 if we encounter an unexpected error.
       return res.status(500).send({ message: "Internal Server Error" });
