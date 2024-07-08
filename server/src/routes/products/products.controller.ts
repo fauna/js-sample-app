@@ -86,7 +86,7 @@ router.get(
       // Return the page of products and the next token to the user. The next token can be passed back to
       // the server to retrieve the next page of products.
       return res
-        .status(201)
+        .status(200)
         .send({ results: page.data, nextToken: page.after });
     } catch (error: any) {
       // Return a generic 500 if we encounter an unexpected error.
