@@ -100,7 +100,10 @@ export const seedTestData = async () => {
       });
       productCreates.push(
         faunaClient.query<Product>(fql`
-          let p: Any = Product.byName(${product.name}).first() ??
+          let p: Any = Product.byName(${product.name}).first()
+          if (p != null) {
+            p!.update({ stock: ${product.stock} })
+          } else {
             Product.create({
               name: ${product.name},
               price: ${product.price},
@@ -108,7 +111,7 @@ export const seedTestData = async () => {
               stock: ${product.stock},
               category: Category.byName(${category}).first()!,
             })
-          p { name, price, description, stock, category: .category!.name }
+          }
         `)
       );
     }
