@@ -73,6 +73,11 @@ describe("Orders", () => {
       const cart = await req(app).post(
         `/customers/${customerRes.body.id}/cart`
       );
+      // Add an item to the cart.
+      const itemRes = await req(app)
+        .post(`/customers/${customerRes.body.id}/cart/item`)
+        .send({ productName: product.name, quantity: 1 });
+      expect(itemRes.status).toEqual(200);
       // Update the status of the order.
       const orderRes = await req(app)
         .patch(`/orders/${cart.body.id}`)
@@ -86,6 +91,11 @@ describe("Orders", () => {
       expect(orderRes.body.customer).toBeDefined();
       expect(orderRes.body.customer.ts).toBeUndefined();
       expect(orderRes.body.customer.coll).toBeUndefined;
+      // Check that the product stock was decremented.
+      const updatedProduct = await faunaClient.query<Product>(
+        fql`Product.byName(${product.name}).first()`
+      );
+      expect(updatedProduct.data.stock).toEqual(product.stock - 1);
     });
 
     it("returns a 400 if 'status' is invalid", async () => {
@@ -116,6 +126,20 @@ describe("Orders", () => {
       expect(updateRes.status).toEqual(400);
       expect(updateRes.body).toEqual({
         message: "Invalid status transition.",
+      });
+    });
+
+    it("returns a 400 if trying to update the payment method after the order has been placed", async () => {
+      const res = await req(app)
+        .patch(`/orders/${order.id}`) // This order should have already been placed.
+        .send({
+          status: "shipped",
+          payment: { method: "credit card" },
+        });
+      expect(res.status).toEqual(400);
+      expect(res.body).toEqual({
+        message:
+          "Payment method may only be updated before the order has been placed.",
       });
     });
 
