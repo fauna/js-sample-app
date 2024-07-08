@@ -1,12 +1,9 @@
 function createOrUpdateCartItem(customerId, productName, quantity) {
-  let customer = Customer.byId(customerId)
+  // Find the customer by id, using the ! operator to assert that the customer exists.
+  // If the customer does not exist, fauna will throw a document_not_found error.
+  let customer = Customer.byId(customerId)!
   // There is a unique constraint on [.name] so this will return at most one result.
   let product = Product.byName(productName).first()
-
-  // Check if the customer exists.
-  if (customer == null) {
-    abort("Customer does not exist.")
-  }
 
   // Check if the product exists.
   if (product == null) {

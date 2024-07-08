@@ -130,7 +130,7 @@ describe("Orders", () => {
     });
   });
 
-  describe("POST /customers/:id/orders", () => {
+  describe("GET /customers/:id/orders", () => {
     it("returns a list of orders for the customer", async () => {
       const res = await req(app).get(`/customers/${customer.id}/orders`);
       expect(res.status).toEqual(200);
@@ -192,12 +192,19 @@ describe("Orders", () => {
       const res = await req(app).get(`/customers/${customer.id}/cart`);
       expect(res.status).toEqual(200);
       expect(res.body.createdAt).toBeDefined();
+      // Check that top level internal fields are removed.
+      expect(res.body.ts).toBeUndefined();
+      expect(res.body.coll).toBeUndefined();
+      // Check that nested internal fields are removed.
+      expect(res.body.customer).toBeDefined();
+      expect(res.body.customer.ts).toBeUndefined();
+      expect(res.body.customer.coll).toBeUndefined();
     });
 
-    it("returns a 400 if the customer does not exist", async () => {
+    it("returns a 404 if the customer does not exist", async () => {
       const res = await req(app).get("/customers/1234/cart");
-      expect(res.status).toEqual(400);
-      expect(res.body.message).toEqual("No customer with id exists.");
+      expect(res.status).toEqual(404);
+      expect(res.body.message).toEqual("No customer with id '1234' exists.");
     });
   });
 
@@ -215,6 +222,13 @@ describe("Orders", () => {
       expect(cartRes.status).toEqual(200);
       expect(cartRes.body.status).toEqual("cart");
       expect(cartRes.body.total).toEqual(0);
+      // Check that top level internal fields are removed.
+      expect(cartRes.body.ts).toBeUndefined();
+      expect(cartRes.body.coll).toBeUndefined();
+      // Check that nested internal fields are removed.
+      expect(cartRes.body.customer).toBeDefined();
+      expect(cartRes.body.customer.ts).toBeUndefined();
+      expect(cartRes.body.customer.coll).toBeUndefined();
     });
 
     it("returns a 404 if the customer does not exist", async () => {
@@ -245,23 +259,13 @@ describe("Orders", () => {
       expect(secondResp.body.quantity).toEqual(2);
     });
 
-    [{}, { productName: "Lava Lamp" }, { quantity: 10 }].forEach((payload) => {
-      it(`returns a 400 if it receives and invalid payload: ${payload}`, async () => {
-        const res = await req(app).post("/customers/1/cart/item").send(payload);
-        expect(res.status).toEqual(400);
-        expect(res.body).toEqual({
-          message: "You must provide a productName and quantity.",
-        });
-      });
-    });
-
-    it("returns a 400 if the customer does not exist", async () => {
+    it("returns a 400 if the product name is invalid", async () => {
       const res = await req(app)
-        .post("/customers/1234/cart/item")
-        .send({ productName: product.name, quantity: 1 });
+        .post(`/customers/${customer.id}/cart/item`)
+        .send({ productName: 123, quantity: 1 });
       expect(res.status).toEqual(400);
       expect(res.body).toEqual({
-        message: "Customer does not exist.",
+        message: "Product must be a non empty string.",
       });
     });
 
@@ -281,7 +285,7 @@ describe("Orders", () => {
         .send({ productName: product.name, quantity: -1 });
       expect(res.status).toEqual(400);
       expect(res.body).toEqual({
-        message: "Quantity must be a non-negative integer.",
+        message: "Quantity must be a positive integer.",
       });
     });
 
@@ -292,6 +296,16 @@ describe("Orders", () => {
       expect(res.status).toEqual(400);
       expect(res.body).toEqual({
         message: "Product does not have the requested quantity in stock.",
+      });
+    });
+
+    it("returns a 404 if the customer does not exist", async () => {
+      const res = await req(app)
+        .post("/customers/1234/cart/item")
+        .send({ productName: product.name, quantity: 1 });
+      expect(res.status).toEqual(404);
+      expect(res.body).toEqual({
+        message: "No customer with id '1234' exists.",
       });
     });
   });

@@ -10,6 +10,7 @@ import { Request, Response, Router } from "express";
 import { faunaClient } from "../../fauna/fauna-client";
 import { Order, OrderItem } from "./orders.model";
 import {
+  validateOrderItem,
   validateGetOrders,
   validateOrderUpdate,
 } from "../../middleware/orders";
@@ -149,7 +150,9 @@ router.get(
 
     // Define an FQL query to retrieve a page of orders for a given customer.
     // Get the Customer document by id, using the ! operator to assert that the document exists.
-    // If the document does not exist, Fauna will throw a document_not_found error.
+    // If the document does not exist, Fauna will throw a document_not_found error. We then
+    // use the Order.byCustomer index to retrieve all orders for that customer and map over
+    // the results to return only the fields we care about.
     const query = fql`
       let customer: Any = Customer.byId(${customerId})!
       Order.byCustomer(customer).pageSize(${pageSizeNumber}).map((order) => {
@@ -243,78 +246,93 @@ router.post("/customers/:id/cart", async (req: Request, res: Response) => {
 /**
  * Add an item to a customer's cart. Update the quantity if it already exists.
  * @route {POST} /customers/:id/cart/item
- * @param id string
- * @bodyparam productName
+ * @param id
+ * @bodyparam product
  * @bodyparam quantity
  * @returns OrderItem
  */
-router.post("/customers/:id/cart/item", async (req: Request, res: Response) => {
-  const { id: customerId } = req.params;
-  const { productName, quantity } = req.body;
+router.post(
+  "/customers/:id/cart/item",
+  validateOrderItem,
+  async (req: Request, res: Response) => {
+    // Extract the customer id from the request parameters.
+    const { id: customerId } = req.params;
+    // Extract the product name and quantity from the request body.
+    const { productName, quantity } = req.body;
 
-  if (!productName || !quantity) {
-    return res.status(400).send({
-      message: "You must provide a productName and quantity.",
-    });
-  }
+    try {
+      // Connect to fauna using the faunaClient. The query method accepts
+      // an FQL query as a parameter as well as an optional return type. In this
+      // case, we are using the DocumentT type to specify that the query will return
+      // a single document representing an OrderItem.
+      const { data: cartItem } = await faunaClient.query<DocumentT<OrderItem>>(
+        // Call our createOrUpdateCartItem UDF to add an item to the customer's cart. The function
+        // definition can be found 'server/schema/functions.fsl'.
+        fql`createOrUpdateCartItem(${customerId}, ${productName}, ${quantity})`
+      );
 
-  try {
-    const { data: cartItem } = await faunaClient.query<DocumentT<OrderItem>>(
-      fql`createOrUpdateCartItem(${customerId}, ${productName}, ${quantity})`
-    );
+      // Return the cart item, stripping out any unnecessary fields.
+      return res.status(200).send(removeInternalFields(cartItem));
+    } catch (error: any) {
+      // We defined several abort contitions in the updateCartItem UDF.
+      // Use them to return appropriate error messages.
+      if (error instanceof AbortError) {
+        return res.status(400).send({
+          message: error.abort,
+        });
+      }
+      // A ServiceError represents an error that occurred within Fauna.
+      if (error instanceof ServiceError) {
+        if (error.code === "document_not_found") {
+          // If the customer does not exist, return a 404.
+          return res
+            .status(404)
+            .send({ message: `No customer with id '${customerId}' exists.` });
+        }
+      }
 
-    // TODO: we will need to strip out internal fields from the response.
-    return res.status(200).send(cartItem);
-  } catch (error: any) {
-    // We defined several abort contitions in the updateCartItem UDF.
-    // Use them to return appropriate error messages.
-    if (error instanceof AbortError) {
-      return res.status(400).send({
-        message: error.abort,
-      });
+      // Return a generic 500 if we encounter an unexpected error.
+      return res.status(500).send({ message: "Internal Server Error" });
     }
-
-    return res
-      .status(500)
-      .send({ message: "The request failed unexpectedly.", error });
   }
-});
+);
 
 /**
- * Get a customer's cart
+ * Get a customer's cart.
  * @route {GET} /customer/:id/cart
- * @param id string
+ * @param id
  * @returns Cart
- * @returns 404
  */
 router.get("/customers/:id/cart", async (req: Request, res: Response) => {
+  // Extract the id from the request parameters.
   const { id } = req.params;
 
   try {
-    const { data: cart } = await faunaClient.query<DocumentT<Order>>(fql`
-      let customer = Customer.byId(${id})
+    // Connect to fauna using the faunaClient. The query method accepts
+    // an FQL query as a parameter as well as an optional return type. In this
+    // case, we are using the DocumentT type to specify that the query will return
+    // a single document representing an Order.
+    const { data: cart } = await faunaClient.query<DocumentT<Order>>(
+      // Get the customer's cart by id, using the ! operator to assert that the document exists.
+      // If the document does not exist, Fauna will throw a document_not_found error.
+      fql`Customer.byId(${id})!.cart`
+    );
 
-      if (customer == null) {
-        abort("No customer with id exists.")
-      }
-
-      customer!.cart {
-        total,
-        status,
-        items,
-        createdAt
-      }
-    `);
-    return res.status(200).send(cart);
+    // Return the cart, stripping out any unnecessary fields.
+    return res.status(200).send(removeInternalFields(cart));
   } catch (error: any) {
-    // Handle any abort conditions we defined in the UDF.
-    if (error instanceof AbortError) {
-      return res.status(400).send({ message: error?.abort });
+    // A ServiceError represents an error that occurred within Fauna.
+    if (error instanceof ServiceError) {
+      if (error.code === "document_not_found") {
+        // If the customer does not exist, return a 404.
+        return res
+          .status(404)
+          .send({ message: `No customer with id '${id}' exists.` });
+      }
     }
 
-    return res
-      .status(500)
-      .send({ message: "The request failed unexpectedly.", error });
+    // Return a generic 500 if we encounter an unexpected error.
+    return res.status(500).send({ message: "Internal Server Error" });
   }
 });
 
