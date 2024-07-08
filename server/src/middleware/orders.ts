@@ -17,7 +17,7 @@ export const validateOrderUpdate = (
   } else if (
     status !== undefined &&
     payment !== undefined &&
-    status !== "cart"
+    (status !== "cart" || status === "processing")
   ) {
     return res.status(400).send({
       message:

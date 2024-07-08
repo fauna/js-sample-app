@@ -85,8 +85,12 @@ router.patch(
     // is valid. If the transition is not valid, the UDF will throw an abort error.
     const query = fql`
       let order = Order.byId(${id})!
-      validateOrderStatusTransition(order!.status, ${status})
-      if (order!.status != "cart" && ${payment !== undefined}) {
+      if (${status !== undefined}) {
+        validateOrderStatusTransition(order!.status, ${status})
+      }
+      if ((order!.status != "cart" || order!.status != "processing") && ${
+        payment !== undefined
+      }) {
         abort("Can not update payment information after an order has been placed.")
       }
       order.update(${{ status, payment }})
@@ -127,7 +131,7 @@ router.patch(
       }
 
       // Return a generic 500 if we encounter an unexpected error.
-      return res.status(500).send({ message: "Internal Server Error", error });
+      return res.status(500).send({ message: "Internal Server Error" });
     }
   }
 );
