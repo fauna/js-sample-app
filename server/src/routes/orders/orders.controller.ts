@@ -85,14 +85,15 @@ router.patch(
     // is valid. If the transition is not valid, the UDF will throw an abort error.
     const query = fql`
       let order = Order.byId(${id})!
+      // Validate the order status transition if a status is provided.
       if (${status !== undefined}) {
         validateOrderStatusTransition(order!.status, ${status})
       }
-      if ((order!.status != "cart" || order!.status != "processing") && ${
-        payment !== undefined
-      }) {
+      // If the order status is not "cart" and a payment is provided, throw an error.
+      if (order!.status != "cart" && ${payment !== undefined}) {
         abort("Can not update payment information after an order has been placed.")
       }
+      // Update the order with the new status and payment information.
       order.update(${{ status, payment }})
     `;
 
