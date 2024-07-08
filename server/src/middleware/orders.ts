@@ -7,12 +7,21 @@ export const validateOrderUpdate = (
   res: Response,
   next: NextFunction
 ) => {
-  const { status } = req.body;
+  const { status, payment } = req.body;
 
   if (status && !Object.values(OrderStatus).includes(status)) {
     return res.status(400).send({
       message:
         "Status must be one of 'cart', 'processing', 'shipped', or 'delivered'.",
+    });
+  } else if (
+    status !== undefined &&
+    payment !== undefined &&
+    status !== "cart"
+  ) {
+    return res.status(400).send({
+      message:
+        "Payment method may only be updated before the order has been placed.",
     });
   }
 

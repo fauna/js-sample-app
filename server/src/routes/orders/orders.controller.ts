@@ -79,28 +79,33 @@ router.patch(
     // Extract the status and payment fields from the request body.
     const { status, payment = {} } = req.body;
 
+    // Define an FQL query to update the order. The query first retrieves the order by id
+    // using the Order.byId function. If the order does not exist, Fauna will throw a document_not_found
+    // error. We then use the validateOrderStatusTransition UDF to ensure that the order status transition
+    // is valid. If the transition is not valid, the UDF will throw an abort error.
+    const query = fql`
+      let order = Order.byId(${id})!
+      validateOrderStatusTransition(order!.status, ${status})
+      if (order!.status != "cart" && ${payment !== undefined}) {
+        abort("Can not update payment information after an order has been placed.")
+      }
+      order.update(${{ status, payment }})
+    `;
+
     try {
       // Connect to fauna using the faunaClient. The query method accepts
       // an FQL query as a parameter as well as an optional return type. In this
       // case, we are using the DocumentT type to specify that the query will return
       // a single document representing an Order.
       const { data: order } = await faunaClient.query<DocumentT<Order>>(
-        // Update the Order document by id, using the ! operator to assert that the document exists.
-        // If the document does not exist, Fauna will throw a document_not_found error.
-        // We also ensure that the status transition is valid based on the current status of the
-        // order and the new status provided.
-        fql`
-          let order = Order.byId(${id})!
-          // Check the logic transition of the order status
-          if (order!.status == "cart" && (${status} != null && ${status} != "processing")) {
-            abort("Invalid status transition.")
-          } else if (order!.status == "processing" && (${status} != null && ${status} != "shipped")) {
-            abort("Invalid status transition.")
-          } else if (order!.status == "shipped" && (${status} != null && ${status} != "delivered")) {
-            abort("Invalid status transition.")
-          }
-          order!.update(${{ status, payment }})
-        `
+        // If the new order status is "processing" call the checkout UDF to process the checkout. The checkout
+        // function definition can be found in 'server/schema/functions.fsl'. It is responsible
+        // for validating that the order in a valid state to be processed and decrements the stock
+        // of each product in the order. This ensures that the product stock is updated in the same transaction
+        // as the order status.
+        status === "processing"
+          ? fql`checkout(${id}, ${status}, ${payment})`
+          : query
       );
 
       // Return the updated order, stripping out any unnecessary fields.
@@ -122,7 +127,7 @@ router.patch(
       }
 
       // Return a generic 500 if we encounter an unexpected error.
-      return res.status(500).send({ message: "Internal Server Error" });
+      return res.status(500).send({ message: "Internal Server Error", error });
     }
   }
 );
