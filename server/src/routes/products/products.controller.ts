@@ -241,4 +241,50 @@ router.patch(
   }
 );
 
+/**
+ * Find products by price and inventory.
+ * @route {GET} /products/search
+ * @queryparam minPrice
+ * @queryparam maxPrice
+ */
+router.get(
+  "/products/by-price",
+  async (req: Request, res: Response) => {
+    // Extract the minPrice, maxPrice, minStock, and maxStock query parameters from the request.
+    const {
+      minPrice = 0,
+      maxPrice = 10000,
+      limit = 25,
+      nextToken = undefined,
+    } = req.query;
+
+    try {
+      /**
+       * This is an example of a covered query.
+       * `name`, `description`, `price`, and `stock` are all indexed fields.
+       * Covered queries are typically faster and less expensive than uncovered queries,
+       * which require document reads. 
+       */
+      const query = fql`
+        Product.sortedByPriceLowToHigh({ from: ${Number(minPrice)}, to: ${Number(maxPrice) }})
+        .pageSize(${Number(limit)}) {
+          name,
+          description,
+          price,
+          stock
+        }
+      `;
+
+      // Execute the query and return the results to the user.
+      const { data: products } = await faunaClient.query<Page<Product>>(
+        nextToken ? fql`Set.paginate(${nextToken as string})` : query
+      );
+      return res.status(200).send({data: products.data, nextToken: products.after});
+    } catch (error: any) {
+      // Return a generic 500 if we encounter an unexpected error.
+      return res.status(500).send({ message: "Internal Server Error" });
+    }
+  }
+);
+
 export default router;

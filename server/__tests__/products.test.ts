@@ -327,4 +327,27 @@ describe("Products", () => {
       );
     });
   });
+
+  describe("GET /products/by-price", () => {
+    it("gets products within a price range", async () => {
+      const minPrice = 10;
+      const maxPrice = 50;
+      const res = await req(app).get(`/products/by-price?minPrice=${minPrice}&maxPrice=${maxPrice}`);
+      expect(res.status).toEqual(200);
+      expect(res.body.data.length).toBeGreaterThan(0);
+      for (const product of res.body.data) {
+        expect(product.price).toBeGreaterThanOrEqual(minPrice);
+        expect(product.price).toBeLessThanOrEqual(maxPrice);
+      }
+    });
+
+    it("returns an empty array if no products are within the price range", async () => {
+      const minPrice = 1;
+      const maxPrice = 2;
+      const res = await req(app).get(`/products/by-price?minPrice=${minPrice}&maxPrice=${maxPrice}`);
+      expect(res.status).toEqual(200);
+      expect(res.body.data.length).toEqual(0);
+    });
+  });
+
 });
