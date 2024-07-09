@@ -74,8 +74,9 @@ docs](https://docs.fauna.com/fauna/current/tools/shell/).
     fauna schema push
     ```
 
-    When prompted, accept and push the changes. This creates resources for any
-    schemas in the `server/schema` directory.
+    When prompted, accept and push the changes. The push creates the collections
+    and user-defined functions (UDFs) defined in the FSL files of the
+    `server/schema` directory.
 
 1. Create a key with the `server` role for the `ECommerce` database:
 
