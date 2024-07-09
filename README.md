@@ -1,169 +1,165 @@
-# Fauna TypeScript Sample App
+# Fauna JavaScript sample app
 
-Welcome to the sample app! This README will help you get the app up and running
-in your local environment.
+This sample app shows how you can use [Fauna](https://fauna.com) in a
+production application.
 
-## Prerequisites
+The app uses Node.js and the Fauna JavaScript driver to create HTTP API
+endpoints for an e-commerce store. The source code includes comments that highlight
+best practices for the driver and Fauna Query Language (FQL) queries.
 
-In order to run the sample app, you will need Fauna account. If you don't, you
-can create one at https://dashboard.fauna.com/register .
+This README covers how to set up and run the app locally. For an overview of
+Fauna, see the [Fauna
+docs](https://docs.fauna.com/fauna/current/get_started/overview).
 
-In addition to a Fauna account you will need `npm` and `node` version 20 or
-greater installed.
+## Requirements
 
-With those in place, you will then need the latest Fauna CLI. If you do not have
-it already you can install it via
+To run the app, you'll need:
 
-```sh
-$ npm install --global fauna-shell
-```
+- A [Fauna account](https://dashboard.fauna.com/register). You can sign up for a
+  free account at https://dashboard.fauna.com/register.
 
-## Setting up your project
+- [Node.js](https://nodejs.org/en/download/) v20.x or later
 
-With your general node environment set up and the Fauna CLI installed, you are
-ready to run the sample app. Clone this repo, and then open up a terminal and cd
-into your cloned repository.
+- The [Fauna CLI](https://docs.fauna.com/fauna/current/tools/shell/). To install
+  the CLI, run:
 
-```sh
-$ cd /path/to/js-sample-app
-```
+    ```sh
+    npm install -g fauna-shell
+    ```
 
-### Log in to your Fauna account
+You should also be familiar with basic Fauna CLI commands and usage. For an
+overview, see the [Fauna CLI
+docs](https://docs.fauna.com/fauna/current/tools/shell/).
 
-If you have not done so already, log in to your Fauna account via the CLI.
-Follow the prompts and choose `cloud-us` as your default endpoint.
+## Set up
 
-```sh
-$ fauna cloud-login
-? Endpoint name cloud
-? Email address (from https://dashboard.fauna.com/) <enter your account email>
-? Password ***********
-? Endpoints created. Which endpoint would you like to set as default? cloud-us
-Configuration updated.
-```
+1. In your terminal, clone the repo and navigate to the `js-sample-app`
+   directory. For example:
 
-### Create a Database
+    ```sh
+    git clone git@github.com:fauna/js-sample-app.git
+    cd js-sample-app
+    ```
 
-Create a Database to use with the sample app:
+    The repo includes a
+   [`.fauna-project`](https://docs.fauna.com/fauna/current/tools/shell/#proj-config)
+   file that contains defaults for the Fauna CLI. The file indicates:
 
-```sh
-$ fauna create-database --endpoint=cloud-us --environment='' ECommerce
-creating database ECommerce
+    - `ECommerce` is the default database for the project.
 
-  created database ECommerce
+    - The project stores Fauna Schema Language (FSL) files in the
+      `server/schema` directory.
 
-  To start a shell with your new database, run:
+1. Log in to Fauna using the Fauna CLI:
 
-  fauna shell ECommerce
+    ```sh
+    fauna cloud-login
+    ```
 
-  Or, to create an application key for your database, run:
+    The command requires an email and password login. If you log in to the Fauna
+    using GitHub or Netlify, you can enable email and password login using the
+    [Forgot Password](https://dashboard.fauna.com/forgot-password) workflow.
 
-  fauna create-key ECommerce
-```
 
-You can verify that the Database is in place using the cli. From the project root, run:
+1. Use the Fauna CLI to create the `ECommerce` database:
 
-```sh
-$ fauna eval '1 + 1'
-2
-```
+    ```sh
+    fauna create-database --environment='' ECommerce
+    ```
 
-### Set up Database schema
+1.  Push the FSL files in the `server/schema` directory to the `ECommerce`
+    database:
 
-With the Database in place, you can set up the application schema. With a
-Fauna-based application, you manage schema in the form of FSL (Fauna Schema
-Language) source files. The sample app stores these files in the `server/schema`
-directory.
+    ```sh
+    fauna schema push
+    ```
 
-Push the sample app schema. Accept the changes by entering `y` when prompted:
+    When prompted, accept and push the changes. This creates resources for any
+    schemas in the `server/schema` directory.
 
-```sh
-$ fauna schema push
-Connected to endpoint: cloud-us database: ECommerce
-Proposed diff:
+1. Create a key with the `server` role for the `ECommerce` database:
 
-* Adding collection 'Category' to 948:1144/collections.fsl:
+    ```sh
+    fauna create-key --environment='' ECommerce server
+    ```
 
-  + collection Category {
-  +   name: String
-  +   description: String
-  +   compute products: Set<Product> = (category => Product.byCategory(category))
-  +
-  +   unique [.name]
-...
+    Copy the returned `secret`. The app can use the key's secret to authenticate
+    requests to the database.
 
-? Accept and push changes? (y/N) y
-```
+1. Navigate to the `server` subdirectory. For example:
 
-The Fauna CLI uses local project configuration in `.fauna-project` in order to
-determine where to find your project's schema as well as what database to use by
-default. The configuraton is flexible, supporting the ability to configure
-multiple environments such as dev, staging, and production, targeting different
-databases or even different Fauna accounts. How to do so is beyond the scope of
-this readme. Refer to the [Fauna CLI
-documentation](https://docs.fauna.com/fauna/current/tools/shell/) for more
-information.
+    ```sh
+    cd server
+    ```
 
-## Set environmental variables for the sample app API server
+1. In the `server` subdirectory, make a copy of the `.env.example` file and name the
+   copy `.env`. For example:
 
-We now need to create a Database Key for the sample app to use. Create a Key
-with the built-in `server` role using the command:
+    ```sh
+    cp .env.example .env
+    ```
 
-```sh
-$ fauna create-key --endpoint=cloud-us --environment='' ECommerce server
-Connected to endpoint: cloud-us
-Connected to endpoint: cloud-us database: ECommerce
-creating key for database 'ECommerce' with role 'server'
+1.  In `.env`, set the `FAUNA_SECRET` environment variable to the secret you
+    copied earlier:
 
-  created key for database 'ECommerce' with role 'server'.
-  secret: fnXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+    ```
+    ...
+    FAUNA_SECRET=fn...
+    ...
+    ```
 
-  To access 'ECommerce' with this key, create a client using
-  the driver library for your language of choice using
-  the above secret.
-```
+## Run the app
 
-Copy `server/.env.example` into a local `server/.env` file. Replace the value of
-`FAUNA_SECRET` with the API secret returned from running the create-key command.
-
-## Start up the API server
-
-The sample app API server is a node app which is in `server` directory. Change
-to the server directory and start node:
+The app runs an HTTP API server. From the `server` subdirectory, run:
 
 ```sh
-$ cd server
-$ npm install && npm run dev
-
-added 421 packages, and audited 422 packages in 6s
-
-51 packages are looking for funding
-  run `npm fund` for details
-
-found 0 vulnerabilities
-
-> js-sample-app-server@1.0.0 dev
-> nodemon src/index.ts
-
-[nodemon] 3.1.4
-[nodemon] to restart at any time, enter `rs`
-[nodemon] watching path(s): *.*
-[nodemon] watching extensions: ts,json
-[nodemon] starting `ts-node src/index.ts`
-server is listening at http://localhost:8000
+npm install && npm run dev
 ```
+
+Once started, the local server is available at http://localhost:8000.
+
+## Make HTTP API requests
+
+The app's HTTP endpoints are defined in `*.controller.ts` files in the
+`server/src/routes` directory.
+
+You can use endpoints to run API requests that read or write data from
+the `ECommerce` database.
+
+For example, with the local server running in a separate terminal tab, run the
+following curl request to the `POST /customers` endpoint. The request creates a
+`Customer` collection document in the `ECommerce` database.
+
+```
+curl -X POST \
+  http://localhost:8000/customers \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Alice Appleseed",
+    "email": "alice.appleseed@example.com",
+    "address": {
+      "street": "87856 Mendota Court",
+      "city": "Washington",
+      "state": "DC",
+      "postalCode": "20220",
+      "country": "USA"
+    }
+  }'
+```
+
+You can view the documents for the collection in the [Fauna
+Dashboard](https://dashboard.fauna.com/).
 
 ## Run tests
 
-With the API server running, verify everything is working correctly by running
-tests. Change to the sample app `server` directory and run tests via `npm`:
+The app includes tests that check the app's API endpoints and create related documents
+in the `ECommerce` database.
+
+From the `server` subdirectory, run:
 
 ```sh
-$ cd server
-$ npm run test
+npm install && npm run test
 ```
 
-Assuming all tests pass, congratulations, you have successfully set up the
-sample app!
-
-After running the tests you should see several documents in each of the collections in your ECommerce database. You can view them on the [dashboard](https://dashboard.fauna.com/resources/explorer/us/ECommerce/collections).
+You can view documents created by the tests for each collection in the [Fauna
+Dashboard](https://dashboard.fauna.com/).
