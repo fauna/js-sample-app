@@ -9,6 +9,14 @@ import { Product } from "../src/routes/products/products.model";
 describe("Products", () => {
   let products: Array<Product>;
   let productsToCleanup: Array<Product> = [];
+  const productFields = [
+    "id",
+    "name",
+    "price",
+    "description",
+    "stock",
+    "category",
+  ];
 
   beforeAll(async () => {
     const { products: p } = await seedTestData();
@@ -29,15 +37,8 @@ describe("Products", () => {
       const res = await req(app).get("/products");
       expect(res.status).toEqual(200);
       expect(res.body.results.length).toBeGreaterThanOrEqual(products.length);
-      // Check that internal fields are removed.
       for (const product of res.body.results) {
-        // Check that top level internal fields are removed.
-        expect(product.ts).toBeUndefined();
-        expect(product.coll).toBeUndefined();
-        // Check that nested internal fields are removed.
-        expect(product.category).toBeDefined();
-        expect(product.category.ts).toBeUndefined();
-        expect(product.category.coll).toBeUndefined();
+        expect(Object.keys(product).sort()).toEqual(productFields.sort());
       }
     });
 
@@ -97,13 +98,7 @@ describe("Products", () => {
       // Check that the product was created successfully.
       expect(res.status).toEqual(201);
       expect(res.body.name).toEqual(product.name);
-      // Check that top level internal fields are removed.
-      expect(res.body.ts).toBeUndefined();
-      expect(res.body.coll).toBeUndefined();
-      // Check that nested internal fields are removed.
-      expect(res.body.category).toBeDefined();
-      expect(res.body.category.ts).toBeUndefined();
-      expect(res.body.category.coll).toBeUndefined();
+      expect(Object.keys(res.body).sort()).toEqual(productFields.sort());
     });
 
     it("returns a 400 if 'name' is missing or invalid", async () => {
@@ -223,13 +218,7 @@ describe("Products", () => {
       expect(updateRes.status).toEqual(200);
       expect(updateRes.body.price).toEqual(19.99);
       expect(updateRes.body.name).toEqual(product.name);
-      // Check that top level internal fields are removed.
-      expect(updateRes.body.ts).toBeUndefined();
-      expect(updateRes.body.coll).toBeUndefined();
-      // Check that nested internal fields are removed.
-      expect(updateRes.body.category).toBeDefined();
-      expect(updateRes.body.category.ts).toBeUndefined();
-      expect(updateRes.body.category.coll).toBeUndefined;
+      expect(Object.keys(updateRes.body).sort()).toEqual(productFields.sort());
     });
 
     it("returns a 404 if the product does not exist", async () => {
@@ -332,22 +321,28 @@ describe("Products", () => {
     it("gets products within a price range", async () => {
       const minPrice = 10;
       const maxPrice = 50;
-      const res = await req(app).get(`/products/by-price?minPrice=${minPrice}&maxPrice=${maxPrice}`);
+      const res = await req(app).get(
+        `/products/by-price?minPrice=${minPrice}&maxPrice=${maxPrice}`
+      );
       expect(res.status).toEqual(200);
       expect(res.body.data.length).toBeGreaterThan(0);
       for (const product of res.body.data) {
         expect(product.price).toBeGreaterThanOrEqual(minPrice);
         expect(product.price).toBeLessThanOrEqual(maxPrice);
+        expect(Object.keys(product).sort()).toEqual(
+          ["name", "description", "price", "stock"].sort()
+        );
       }
     });
 
     it("returns an empty array if no products are within the price range", async () => {
       const minPrice = 1;
       const maxPrice = 2;
-      const res = await req(app).get(`/products/by-price?minPrice=${minPrice}&maxPrice=${maxPrice}`);
+      const res = await req(app).get(
+        `/products/by-price?minPrice=${minPrice}&maxPrice=${maxPrice}`
+      );
       expect(res.status).toEqual(200);
       expect(res.body.data.length).toEqual(0);
     });
   });
-
 });

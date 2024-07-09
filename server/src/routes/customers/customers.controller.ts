@@ -2,7 +2,7 @@ import { fql, ServiceError, type DocumentT } from "fauna";
 import { faunaClient } from "../../fauna/fauna-client";
 import { Request, Response, Router } from "express";
 import { Customer } from "./customers.model";
-import { removeInternalFields } from "../../fauna/util";
+import { docTo } from "../../fauna/util";
 import {
   validateCustomerCreate,
   validateCustomerUpdate,
@@ -32,7 +32,7 @@ router.get("/customers/:id", async (req: Request, res: Response) => {
     );
 
     // Return the customer, stripping out any unnecessary fields.
-    return res.status(200).send(removeInternalFields<Customer>(customer));
+    return res.status(200).send(docTo<Customer>(customer));
   } catch (error: unknown) {
     // Handle errors returned by Fauna here. A ServiceError represents an
     // error that occurred within Fauna.
@@ -81,7 +81,7 @@ router.post(
       );
 
       // Return the created customer, stripping out any unnecessary fields.
-      return res.status(201).send(removeInternalFields(customer));
+      return res.status(201).send(docTo<Customer>(customer));
     } catch (error: any) {
       // Handle errors returned by Fauna here. A ServiceError represents an
       // error that occurred within Fauna.
@@ -137,7 +137,7 @@ router.patch(
       );
 
       // Return the updated customer, stripping out any unnecessary fields.
-      return res.status(200).send(removeInternalFields(customer));
+      return res.status(200).send(docTo<Customer>(customer));
     } catch (error: any) {
       // Handle errors returned by Fauna here. A ServiceError represents an
       // error that occurred within Fauna.

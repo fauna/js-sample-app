@@ -9,6 +9,7 @@ import { Customer } from "../src/routes/customers/customers.model";
 describe("Customers", () => {
   let customer: Customer;
   let customersToCleanup: Array<Customer> = [];
+  const customerFields = ["id", "name", "email", "address", "cart", "orders"];
 
   beforeAll(async () => {
     const { customer: c } = await seedTestData();
@@ -30,13 +31,7 @@ describe("Customers", () => {
       // Check that the response is correct.
       expect(res.status).toEqual(200);
       expect(res.body.email).toEqual(customer.email);
-      // Check that top level internal fields are removed.
-      expect(res.body.ts).toBeUndefined();
-      expect(res.body.coll).toBeUndefined();
-      // Check that nested internal fields are removed.
-      expect(res.body.cart).toBeDefined();
-      expect(res.body.cart.ts).toBeUndefined();
-      expect(res.body.cart.coll).toBeUndefined();
+      expect(Object.keys(res.body).sort()).toEqual(customerFields.sort());
     });
 
     it("returns a 400 if the id is invalid", async () => {
@@ -61,9 +56,7 @@ describe("Customers", () => {
       // Check that the response is correct.
       expect(res.status).toEqual(201);
       expect(res.body.email).toEqual(cust.email);
-      // Check that internal fields are removed.
-      expect(res.body.ts).toBeUndefined();
-      expect(res.body.coll).toBeUndefined();
+      expect(Object.keys(res.body).sort()).toEqual(customerFields.sort());
     });
 
     it("returns a 400 if 'name' is missing or invalid", async () => {
@@ -141,9 +134,7 @@ describe("Customers", () => {
       expect(updateRes.body.name).toEqual("Alice");
       // Confirm the email did not change.
       expect(updateRes.body.email).toEqual(cust.email);
-      // Check that internal fields are removed.
-      expect(updateRes.body.ts).toBeUndefined();
-      expect(updateRes.body.coll).toBeUndefined();
+      expect(Object.keys(updateRes.body).sort()).toEqual(customerFields.sort());
     });
 
     it("returns a 400 if 'name' is invalid", async () => {

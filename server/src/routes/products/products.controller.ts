@@ -9,7 +9,7 @@ import {
 } from "fauna";
 import { Product } from "./products.model";
 import { PaginatedRequest } from "../../types";
-import { removeInternalFields } from "../../fauna/util";
+import { docTo } from "../../fauna/util";
 import {
   validateGetProducts,
   validateProductCreate,
@@ -134,7 +134,7 @@ router.post(
       );
 
       // Return the product, stripping out any unnecessary fields.
-      return res.status(201).send(removeInternalFields(product));
+      return res.status(201).send(docTo<Product>(product));
     } catch (error: any) {
       // Handle errors returned by Fauna here. AbortErrors are thrown when we use the
       // abort function in our FQL query.
@@ -212,7 +212,7 @@ router.patch(
       );
 
       // Return the updated product, stripping out any unnecessary fields.
-      return res.send(removeInternalFields(product));
+      return res.send(docTo<Product>(product));
     } catch (error: any) {
       // Handle errors returned by Fauna here. AbortErrors are thrown when we use the
       // abort function in our FQL query.
@@ -242,37 +242,40 @@ router.patch(
 );
 
 /**
- * Find products by price and inventory.
- * @route {GET} /products/search
+ * Find products by price and stock.
+ * @route {GET} /products/by-price
  * @queryparam minPrice
  * @queryparam maxPrice
  */
 router.get(
   "/products/by-price",
-  async (req: Request, res: Response) => {
+  async (
+    req: PaginatedRequest<{ minPrice?: string; maxPrice?: string }>,
+    res: Response
+  ) => {
     // Extract the minPrice, maxPrice, minStock, and maxStock query parameters from the request.
     const {
       minPrice = 0,
       maxPrice = 10000,
-      limit = 25,
+      pageSize = 25,
       nextToken = undefined,
     } = req.query;
 
     try {
-      /**
-       * This is an example of a covered query.  A covered query is a query where all fields
-       * returned are indexed fields. In this case, we are querying the Product collection
-       * for products with a price between minPrice and maxPrice. We are also limiting the
-       * number of results returned to the limit parameter. The query is covered because
-       * all fields returned are indexed fields. In this case, the fields returned are
-       * `name`, `description`, `price`, and `stock` are all indexed fields.
-       * Covered queries are typically faster and less expensive than uncovered queries,
-       * which require document reads. 
-       * Learn more about covered queries here: https://docs.fauna.com/fauna/current/learn/data_model/indexes#covered-queries
-       */
+      // This is an example of a covered query.  A covered query is a query where all fields
+      // returned are indexed fields. In this case, we are querying the Product collection
+      // for products with a price between minPrice and maxPrice. We are also limiting the
+      // number of results returned to the limit parameter. The query is covered because
+      // all fields returned are indexed fields. In this case, the fields returned are
+      // `name`, `description`, `price`, and `stock` are all indexed fields.
+      // Covered queries are typically faster and less expensive than uncovered queries,
+      // which require document reads.
+      // Learn more about covered queries here: https://docs.fauna.com/fauna/current/learn/data_model/indexes#covered-queries
       const query = fql`
-        Product.sortedByPriceLowToHigh({ from: ${Number(minPrice)}, to: ${Number(maxPrice) }})
-        .pageSize(${Number(limit)}) {
+        Product.sortedByPriceLowToHigh({ from: ${Number(
+          minPrice
+        )}, to: ${Number(maxPrice)}})
+        .pageSize(${Number(pageSize)}) {
           name,
           description,
           price,
@@ -280,11 +283,17 @@ router.get(
         }
       `;
 
-      // Execute the query and return the results to the user.
       const { data: products } = await faunaClient.query<Page<Product>>(
+        // If a nextToken is provided, use the Set.paginate function to get the next page of products.
+        // Otherwise, use the query defined above which will fetch the first page of products.
         nextToken ? fql`Set.paginate(${nextToken as string})` : query
       );
-      return res.status(200).send({data: products.data, nextToken: products.after});
+
+      // Return the page of products and the next token to the user. The next token can be passed back to
+      // the server to retrieve the next page of products.
+      return res
+        .status(200)
+        .send({ data: products.data, nextToken: products.after });
     } catch (error: any) {
       // Return a generic 500 if we encounter an unexpected error.
       return res.status(500).send({ message: "Internal Server Error" });

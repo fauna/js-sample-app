@@ -5,7 +5,7 @@ import {
   type Page,
   ServiceError,
 } from "fauna";
-import { removeInternalFields } from "../../fauna/util";
+import { docTo } from "../../fauna/util";
 import { Request, Response, Router } from "express";
 import { faunaClient } from "../../fauna/fauna-client";
 import { Order, OrderItem } from "./orders.model";
@@ -40,7 +40,7 @@ router.get("/orders/:id", async (req: Request, res: Response) => {
     );
 
     // Return the order, stripping out any unnecessary fields.
-    return res.status(200).send(removeInternalFields(order));
+    return res.status(200).send(docTo<Order>(order));
   } catch (error: any) {
     // A ServiceError represents an error that occurred within Fauna.
     if (error instanceof ServiceError) {
@@ -114,7 +114,7 @@ router.patch(
       );
 
       // Return the updated order, stripping out any unnecessary fields.
-      return res.status(200).send(removeInternalFields(order));
+      return res.status(200).send(docTo<Order>(order));
     } catch (error: any) {
       // AbortErrors are thrown when we use the abort function in our FQL query.
       if (error instanceof AbortError) {
@@ -169,6 +169,7 @@ router.get(
         let order: Any = order
         {
           id: order.id,
+          payment: order.payment,
           createdAt: order.createdAt,
           status: order.status,
           total: order.total,
@@ -236,7 +237,7 @@ router.post("/customers/:id/cart", async (req: Request, res: Response) => {
     );
 
     // Return the cart, stripping out any unnecessary fields.
-    return res.status(200).send(removeInternalFields(cart));
+    return res.status(200).send(docTo<Order>(cart));
   } catch (error: any) {
     // A ServiceError represents an error that occurred within Fauna.
     if (error instanceof ServiceError) {
@@ -282,7 +283,7 @@ router.post(
       );
 
       // Return the cart item, stripping out any unnecessary fields.
-      return res.status(200).send(removeInternalFields(cartItem));
+      return res.status(200).send(docTo<OrderItem>(cartItem));
     } catch (error: any) {
       // We defined several abort contitions in the updateCartItem UDF.
       // Use them to return appropriate error messages.
@@ -329,7 +330,7 @@ router.get("/customers/:id/cart", async (req: Request, res: Response) => {
     );
 
     // Return the cart, stripping out any unnecessary fields.
-    return res.status(200).send(removeInternalFields(cart));
+    return res.status(200).send(docTo<Order>(cart));
   } catch (error: any) {
     // A ServiceError represents an error that occurred within Fauna.
     if (error instanceof ServiceError) {

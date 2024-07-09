@@ -13,6 +13,16 @@ describe("Orders", () => {
   let customer: Customer;
   let order: Order;
   let customersToCleanup: Array<Customer> = [];
+  const orderFields = [
+    "id",
+    "payment",
+    "createdAt",
+    "customer",
+    "items",
+    "status",
+    "total",
+  ];
+  const orderItemFields = ["id", "order", "product", "quantity"];
 
   beforeAll(async () => {
     const { products: p, customer: c, orders: o } = await seedTestData();
@@ -44,13 +54,7 @@ describe("Orders", () => {
     it("returns a 200 if the order is retrieved successfully", async () => {
       const res = await req(app).get(`/orders/${order.id}`);
       expect(res.status).toEqual(200);
-      // Check that top level internal fields are removed.
-      expect(res.body.ts).toBeUndefined();
-      expect(res.body.coll).toBeUndefined();
-      // Check that nested internal fields are removed.
-      expect(res.body.customer).toBeDefined();
-      expect(res.body.customer.ts).toBeUndefined();
-      expect(res.body.customer.coll).toBeUndefined();
+      expect(Object.keys(res.body).sort()).toEqual(orderFields.sort());
     });
 
     it("returns a 404 if the order does not exist", async () => {
@@ -84,13 +88,7 @@ describe("Orders", () => {
         .send({ status: "processing" });
       expect(orderRes.status).toEqual(200);
       expect(orderRes.body.status).toEqual("processing");
-      // Check that top level internal fields are removed.
-      expect(orderRes.body.ts).toBeUndefined();
-      expect(orderRes.body.coll).toBeUndefined();
-      // Check that nested internal fields are removed.
-      expect(orderRes.body.customer).toBeDefined();
-      expect(orderRes.body.customer.ts).toBeUndefined();
-      expect(orderRes.body.customer.coll).toBeUndefined;
+      expect(Object.keys(orderRes.body).sort()).toEqual(orderFields.sort());
       // Check that the product stock was decremented.
       const updatedProduct = await faunaClient.query<Product>(
         fql`Product.byName(${product.name}).first()`
@@ -159,13 +157,9 @@ describe("Orders", () => {
       const res = await req(app).get(`/customers/${customer.id}/orders`);
       expect(res.status).toEqual(200);
       expect(res.body.results.length).toBeGreaterThanOrEqual(0);
-      // Check that top level internal fields are removed.
-      expect(res.body.results[0].ts).toBeUndefined();
-      expect(res.body.results[0].coll).toBeUndefined();
-      // Check that nested internal fields are removed.
-      expect(res.body.results[0].customer).toBeDefined();
-      expect(res.body.results[0].customer.ts).toBeUndefined();
-      expect(res.body.results[0].customer.coll).toBeUndefined;
+      for (const order of res.body.results) {
+        expect(Object.keys(order).sort()).toEqual(orderFields.sort());
+      }
     });
 
     it("can paginate the list of orders", async () => {
@@ -215,14 +209,8 @@ describe("Orders", () => {
     it("returns a 200 if the cart is retrieved successfully", async () => {
       const res = await req(app).get(`/customers/${customer.id}/cart`);
       expect(res.status).toEqual(200);
-      expect(res.body.createdAt).toBeDefined();
-      // Check that top level internal fields are removed.
-      expect(res.body.ts).toBeUndefined();
-      expect(res.body.coll).toBeUndefined();
-      // Check that nested internal fields are removed.
-      expect(res.body.customer).toBeDefined();
-      expect(res.body.customer.ts).toBeUndefined();
-      expect(res.body.customer.coll).toBeUndefined();
+      expect(res.body.status).toEqual("cart");
+      expect(Object.keys(res.body).sort()).toEqual(orderFields.sort());
     });
 
     it("returns a 404 if the customer does not exist", async () => {
@@ -244,15 +232,9 @@ describe("Orders", () => {
         `/customers/${customerRes.body.id}/cart`
       );
       expect(cartRes.status).toEqual(200);
-      expect(cartRes.body.status).toEqual("cart");
       expect(cartRes.body.total).toEqual(0);
-      // Check that top level internal fields are removed.
-      expect(cartRes.body.ts).toBeUndefined();
-      expect(cartRes.body.coll).toBeUndefined();
-      // Check that nested internal fields are removed.
-      expect(cartRes.body.customer).toBeDefined();
-      expect(cartRes.body.customer.ts).toBeUndefined();
-      expect(cartRes.body.customer.coll).toBeUndefined();
+      expect(cartRes.body.status).toEqual("cart");
+      expect(Object.keys(cartRes.body).sort()).toEqual(orderFields.sort());
     });
 
     it("returns a 404 if the customer does not exist", async () => {
@@ -275,12 +257,18 @@ describe("Orders", () => {
         .send({ productName: product.name, quantity: 1 });
       expect(firstResp.status).toEqual(200);
       expect(firstResp.body.quantity).toEqual(1);
+      expect(Object.keys(firstResp.body).sort()).toEqual(
+        orderItemFields.sort()
+      );
       // Update the quantity of the item in the cart.
       const secondResp = await req(app)
         .post(`/customers/${customerRes.body.id}/cart/item`)
         .send({ productName: product.name, quantity: 2 });
       expect(secondResp.status).toEqual(200);
       expect(secondResp.body.quantity).toEqual(2);
+      expect(Object.keys(secondResp.body).sort()).toEqual(
+        orderItemFields.sort()
+      );
     });
 
     it("returns a 400 if the product name is invalid", async () => {
