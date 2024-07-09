@@ -47,7 +47,7 @@ Configuration updated.
 Create a Database to use with the sample app:
 
 ```sh
-$ fauna create-database --endpoint=cloud-us --environment='' ECommerce 
+$ fauna create-database --endpoint=cloud-us --environment='' ECommerce
 creating database ECommerce
 
   created database ECommerce
@@ -88,7 +88,7 @@ Proposed diff:
   +   name: String
   +   description: String
   +   compute products: Set<Product> = (category => Product.byCategory(category))
-  + 
+  +
   +   unique [.name]
 ...
 
@@ -165,3 +165,5 @@ $ npm run test
 
 Assuming all tests pass, congratulations, you have successfully set up the
 sample app!
+
+After running the tests you should see several documents in each of the collections in your ECommerce database. You can view them on the [dashboard](https://dashboard.fauna.com/resources/explorer/us/ECommerce/collections).
