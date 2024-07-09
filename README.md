@@ -124,7 +124,7 @@ Once started, the local server is available at http://localhost:8000.
 The app's HTTP API endpoints are defined in `*.controller.ts` files in the
 `server/src/routes` directory.
 
-You can use endpoints to make API requests that read and write data from
+You can use the endpoints to make API requests that read and write data from
 the `ECommerce` database.
 
 For example, with the local server running in a separate terminal tab, run the
