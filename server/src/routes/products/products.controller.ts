@@ -260,10 +260,15 @@ router.get(
 
     try {
       /**
-       * This is an example of a covered query.
+       * This is an example of a covered query.  A covered query is a query where all fields
+       * returned are indexed fields. In this case, we are querying the Product collection
+       * for products with a price between minPrice and maxPrice. We are also limiting the
+       * number of results returned to the limit parameter. The query is covered because
+       * all fields returned are indexed fields. In this case, the fields returned are
        * `name`, `description`, `price`, and `stock` are all indexed fields.
        * Covered queries are typically faster and less expensive than uncovered queries,
        * which require document reads. 
+       * Learn more about covered queries here: https://docs.fauna.com/fauna/current/learn/data_model/indexes#covered-queries
        */
       const query = fql`
         Product.sortedByPriceLowToHigh({ from: ${Number(minPrice)}, to: ${Number(maxPrice) }})
