@@ -11,6 +11,49 @@ This README covers how to set up and run the app locally. For an overview of
 Fauna, see the [Fauna
 docs](https://docs.fauna.com/fauna/current/get_started/overview).
 
+## Highlights
+
+The sample app uses the following Fauna features:
+
+- FQL queries ([Code example](server/src/routes/products/products.controller.ts))
+
+  Fauna stores data as JSON-like documents in collections. The app uses FQL
+  queries to retrieve, create, and update collection documents in a Fauna
+  database. The queries use:
+
+  - [Pagination](https://docs.fauna.com/fauna/current/learn/query/pagination/)
+  - [Projection](https://docs.fauna.com/fauna/current/reference/fql/projection/)
+  - [FQL API methods](https://docs.fauna.com/fauna/current/reference/fql-api/),
+    such as
+    [`map()`](https://docs.fauna.com/fauna/current/reference/fql-api/schema-entities/set/map/)
+
+  See [Query data with FQL](https://docs.fauna.com/fauna/current/learn/query/).
+
+- Document relationships ([Code example](server/schema/collections.fsl))
+
+  Fauna supports dynamic one-to-one, one-to-many, and many-to-many relationships
+  between documents. You can use relationships to model complex data structures
+  without duplicating data.
+
+  See [Document
+  relationships](https://docs.fauna.com/fauna/current/learn/query/relationships/).
+
+- Document type definitions ([Code example](server/schema/collections.fsl))
+
+  You can use document types and zero-downtime migrations to progressively
+  enforce and evolve an app's data model. You define document types in
+  collection schemas using Fauna Schema Language (FSL).
+
+  See [Schema](https://docs.fauna.com/fauna/current/learn/schema/).
+
+- User-defined functions ([Code example](server/schema/functions.fsl))
+
+  You can use user-defined functions (UDFs) to encapsulate business logic as a
+  manageable, maintainable resource in Fauna. You define UDFs as FSL schema.
+
+  See [User-defined
+  functions](https://docs.fauna.com/fauna/current/learn/data-model/user-defined-functions/).
+
 ## Requirements
 
 To run the app, you'll need:
