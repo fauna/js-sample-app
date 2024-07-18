@@ -33,25 +33,21 @@ The sample app uses the following Fauna features:
 
   Fauna supports dynamic one-to-one, one-to-many, and many-to-many relationships
   between documents. You can use relationships to model complex data structures
-  without duplicating data.
-
-  See [Document
+  without duplicating data. See [Document
   relationships](https://docs.fauna.com/fauna/current/learn/query/relationships/).
 
 - Document type definitions ([Code example](server/schema/collections.fsl))
 
   You can use document types and zero-downtime migrations to progressively
   enforce and evolve an app's data model. You define document types in
-  collection schemas using Fauna Schema Language (FSL).
-
-  See [Schema](https://docs.fauna.com/fauna/current/learn/schema/).
+  collection schemas using Fauna Schema Language (FSL). See
+  [Schema](https://docs.fauna.com/fauna/current/learn/schema/).
 
 - User-defined functions ([Code example](server/schema/functions.fsl))
 
   You can use user-defined functions (UDFs) to encapsulate business logic as a
-  manageable, maintainable resource in Fauna. You define UDFs as FSL schema.
-
-  See [User-defined
+  manageable, maintainable resource in Fauna. You define UDFs as FSL schema. See
+  [User-defined
   functions](https://docs.fauna.com/fauna/current/learn/data-model/user-defined-functions/).
 
 ## Requirements
