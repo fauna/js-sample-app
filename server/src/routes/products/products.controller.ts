@@ -1,4 +1,4 @@
-import { Request, Response, Router } from "express";
+import { Request, Response, Router, NextFunction } from "express";
 import { faunaClient } from "../../fauna/fauna-client";
 import {
   AbortError,
@@ -15,6 +15,7 @@ import {
   validateProductCreate,
   validateProductUpdate,
 } from "../../middleware/products";
+import { errorHandler } from "../../middleware/errors";
 
 const router = Router();
 
@@ -31,7 +32,11 @@ const router = Router();
 router.get(
   "/products",
   validateGetProducts,
-  async (req: PaginatedRequest<{ category?: string }>, res: Response) => {
+  async (
+    req: PaginatedRequest<{ category?: string }>,
+    res: Response,
+    next: NextFunction
+  ) => {
     // Extract the category query parameter from the request.
     const { category, nextToken = undefined, pageSize = 10 } = req.query;
 
@@ -89,8 +94,8 @@ router.get(
         .status(200)
         .send({ results: page.data, nextToken: page.after });
     } catch (error: any) {
-      // Return a generic 500 if we encounter an unexpected error.
-      return res.status(500).send({ message: "Internal Server Error" });
+      // Pass errors to the generic error-handling middleware.
+      next(error);
     }
   }
 );
@@ -108,7 +113,7 @@ router.get(
 router.post(
   "/products",
   validateProductCreate,
-  async (req: Request, res: Response) => {
+  async (req: Request, res: Response, next: NextFunction) => {
     // Extract fields from the request body.
     const { name, price, description, stock, category } = req.body;
 
@@ -158,9 +163,8 @@ router.post(
             .send({ message: "A product with that name already exists." });
         }
       }
-
-      // Return a generic 500 if we encounter an unexpected error.
-      return res.status(500).send({ message: "Internal Server Error" });
+      // Pass other errors to the generic error-handling middleware.
+      next(error);
     }
   }
 );
@@ -178,7 +182,7 @@ router.post(
 router.patch(
   "/products/:id",
   validateProductUpdate,
-  async (req: Request, res: Response) => {
+  async (req: Request, res: Response, next: NextFunction) => {
     // Extract the id from the request parameters.
     const { id } = req.params;
     // Extract fields from the request body.
@@ -234,9 +238,8 @@ router.patch(
             .send({ message: "A product with that name already exists." });
         }
       }
-
-      // Return a generic 500 if we encounter an unexpected error.
-      return res.status(500).send({ message: "Internal Server Error" });
+      // Pass other errors to the generic error-handling middleware.
+      next(error);
     }
   }
 );
@@ -251,7 +254,8 @@ router.get(
   "/products/by-price",
   async (
     req: PaginatedRequest<{ minPrice?: string; maxPrice?: string }>,
-    res: Response
+    res: Response,
+    next: NextFunction
   ) => {
     // Extract the minPrice, maxPrice, minStock, and maxStock query parameters from the request.
     const {
@@ -295,10 +299,13 @@ router.get(
         .status(200)
         .send({ data: products.data, nextToken: products.after });
     } catch (error: any) {
-      // Return a generic 500 if we encounter an unexpected error.
-      return res.status(500).send({ message: "Internal Server Error" });
+      // Pass errors to the generic error-handling middleware.
+      next(error);
     }
   }
 );
+
+// Use the middleware to handle 401 and other generic errors.
+router.use(errorHandler);
 
 export default router;

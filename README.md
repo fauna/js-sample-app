@@ -171,7 +171,7 @@ following curl request to the `POST /customers` endpoint. The request creates a
 `Customer` collection document in the `ECommerce` database.
 
 ```
-curl -X POST \
+curl -v \
   http://localhost:8000/customers \
   -H "Content-Type: application/json" \
   -d '{
