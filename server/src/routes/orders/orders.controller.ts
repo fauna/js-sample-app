@@ -6,7 +6,7 @@ import {
   ServiceError,
 } from "fauna";
 import { docTo } from "../../fauna/util";
-import { Request, Response, Router } from "express";
+import { Request, Response, Router, NextFunction } from "express";
 import { faunaClient } from "../../fauna/fauna-client";
 import { Order, OrderItem } from "./orders.model";
 import {
@@ -14,6 +14,7 @@ import {
   validateGetOrders,
   validateOrderUpdate,
 } from "../../middleware/orders";
+import { errorHandler } from "../../middleware/errors";
 import { PaginatedRequest } from "../../types";
 
 const router = Router();
@@ -24,43 +25,45 @@ const router = Router();
  * @param id
  * @returns Order
  */
-router.get("/orders/:id", async (req: Request, res: Response) => {
-  // Extract the id from the request parameters.
-  const { id } = req.params;
+router.get(
+  "/orders/:id",
+  async (req: Request, res: Response, next: NextFunction) => {
+    // Extract the id from the request parameters.
+    const { id } = req.params;
 
-  try {
-    // Connect to fauna using the faunaClient. The query method accepts
-    // an FQL query as a parameter as well as an optional return type. In this
-    // case, we are using the DocumentT type to specify that the query will return
-    // a single document representing an Order.
-    const { data: order } = await faunaClient.query<DocumentT<Order>>(
-      // Get the Order document by id, using the ! operator to assert that the document exists.
-      // If the document does not exist, Fauna will throw a document_not_found error.
-      fql`Order.byId(${id})!`
-    );
+    try {
+      // Connect to fauna using the faunaClient. The query method accepts
+      // an FQL query as a parameter as well as an optional return type. In this
+      // case, we are using the DocumentT type to specify that the query will return
+      // a single document representing an Order.
+      const { data: order } = await faunaClient.query<DocumentT<Order>>(
+        // Get the Order document by id, using the ! operator to assert that the document exists.
+        // If the document does not exist, Fauna will throw a document_not_found error.
+        fql`Order.byId(${id})!`
+      );
 
-    // Return the order, stripping out any unnecessary fields.
-    return res.status(200).send(docTo<Order>(order));
-  } catch (error: any) {
-    // A ServiceError represents an error that occurred within Fauna.
-    if (error instanceof ServiceError) {
-      if (error.code === "invalid_argument") {
-        // If the id is not valid, return a 400.
-        return res
-          .status(400)
-          .send({ message: `Invalid id '${id}' provided.` });
-      } else if (error.code === "document_not_found") {
-        // If the document does not exist, return a 404.
-        return res
-          .status(404)
-          .send({ message: `No order with id '${id}' exists.` });
+      // Return the order, stripping out any unnecessary fields.
+      return res.status(200).send(docTo<Order>(order));
+    } catch (error: any) {
+      // A ServiceError represents an error that occurred within Fauna.
+      if (error instanceof ServiceError) {
+        if (error.code === "invalid_argument") {
+          // If the id is not valid, return a 400.
+          return res
+            .status(400)
+            .send({ message: `Invalid id '${id}' provided.` });
+        } else if (error.code === "document_not_found") {
+          // If the document does not exist, return a 404.
+          return res
+            .status(404)
+            .send({ message: `No order with id '${id}' exists.` });
+        }
       }
+      // Pass other errors to the generic error-handling middleware.
+      next(error);
     }
-
-    // Return a generic 500 if we encounter an unexpected error.
-    return res.status(500).send({ message: "Internal Server Error" });
   }
-});
+);
 
 /**
  * Update an existing order.
@@ -73,7 +76,7 @@ router.get("/orders/:id", async (req: Request, res: Response) => {
 router.patch(
   "/orders/:id",
   validateOrderUpdate,
-  async (req: Request, res: Response) => {
+  async (req: Request, res: Response, next: NextFunction) => {
     // Extract the id from the request parameters.
     const { id } = req.params;
     // Extract the status and payment fields from the request body.
@@ -130,9 +133,8 @@ router.patch(
             .send({ message: `No order with id '${id}' exists.` });
         }
       }
-
-      // Return a generic 500 if we encounter an unexpected error.
-      return res.status(500).send({ message: "Internal Server Error" });
+      // Pass other errors to the generic error-handling middleware.
+      next(error);
     }
   }
 );
@@ -149,7 +151,7 @@ router.patch(
 router.get(
   "/customers/:id/orders",
   validateGetOrders,
-  async (req: PaginatedRequest, res: Response) => {
+  async (req: PaginatedRequest, res: Response, next: NextFunction) => {
     // Extract the customer id from the request parameters.
     const { id: customerId } = req.params;
     // Extract the nextToken and pageSize from the request body
@@ -208,9 +210,8 @@ router.get(
             .send({ message: `No customer with id '${customerId}' exists.` });
         }
       }
-
-      // Return a generic 500 if we encounter an unexpected error.
-      return res.status(500).send({ message: "Internal Server Error" });
+      // Pass other errors to the generic error-handling middleware.
+      next(error);
     }
   }
 );
@@ -221,38 +222,40 @@ router.get(
  * @param id
  * @returns Order
  */
-router.post("/customers/:id/cart", async (req: Request, res: Response) => {
-  // Extract the id from the request parameters.
-  const { id } = req.params;
+router.post(
+  "/customers/:id/cart",
+  async (req: Request, res: Response, next: NextFunction) => {
+    // Extract the id from the request parameters.
+    const { id } = req.params;
 
-  try {
-    // Connect to fauna using the faunaClient. The query method accepts
-    // an FQL query as a parameter as well as an optional return type. In this
-    // case, we are using the DocumentT type to specify that the query will return
-    // a single document representing an Order.
-    const { data: cart } = await faunaClient.query<DocumentT<Order>>(
-      // Call our getOrCreateCart UDF to get the customer's cart. The function
-      // definition can be found 'server/schema/functions.fsl'.
-      fql`getOrCreateCart(${id})`
-    );
+    try {
+      // Connect to fauna using the faunaClient. The query method accepts
+      // an FQL query as a parameter as well as an optional return type. In this
+      // case, we are using the DocumentT type to specify that the query will return
+      // a single document representing an Order.
+      const { data: cart } = await faunaClient.query<DocumentT<Order>>(
+        // Call our getOrCreateCart UDF to get the customer's cart. The function
+        // definition can be found 'server/schema/functions.fsl'.
+        fql`getOrCreateCart(${id})`
+      );
 
-    // Return the cart, stripping out any unnecessary fields.
-    return res.status(200).send(docTo<Order>(cart));
-  } catch (error: any) {
-    // A ServiceError represents an error that occurred within Fauna.
-    if (error instanceof ServiceError) {
-      if (error.code === "document_not_found") {
-        // If the customer does not exist, return a 404.
-        return res
-          .status(404)
-          .send({ message: `No customer with id '${id}' exists.` });
+      // Return the cart, stripping out any unnecessary fields.
+      return res.status(200).send(docTo<Order>(cart));
+    } catch (error: any) {
+      // A ServiceError represents an error that occurred within Fauna.
+      if (error instanceof ServiceError) {
+        if (error.code === "document_not_found") {
+          // If the customer does not exist, return a 404.
+          return res
+            .status(404)
+            .send({ message: `No customer with id '${id}' exists.` });
+        }
       }
+      // Pass other errors to the generic error-handling middleware.
+      next(error);
     }
-
-    // Return a generic 500 if we encounter an unexpected error.
-    return res.status(500).send({ message: "Internal Server Error" });
   }
-});
+);
 
 /**
  * Add an item to a customer's cart. Update the quantity if it already exists.
@@ -265,7 +268,7 @@ router.post("/customers/:id/cart", async (req: Request, res: Response) => {
 router.post(
   "/customers/:id/cart/item",
   validateOrderItem,
-  async (req: Request, res: Response) => {
+  async (req: Request, res: Response, next: NextFunction) => {
     // Extract the customer id from the request parameters.
     const { id: customerId } = req.params;
     // Extract the product name and quantity from the request body.
@@ -301,9 +304,8 @@ router.post(
             .send({ message: `No customer with id '${customerId}' exists.` });
         }
       }
-
-      // Return a generic 500 if we encounter an unexpected error.
-      return res.status(500).send({ message: "Internal Server Error" });
+      // Pass other errors to the generic error-handling middleware.
+      next(error);
     }
   }
 );
@@ -314,37 +316,42 @@ router.post(
  * @param id
  * @returns Cart
  */
-router.get("/customers/:id/cart", async (req: Request, res: Response) => {
-  // Extract the id from the request parameters.
-  const { id } = req.params;
+router.get(
+  "/customers/:id/cart",
+  async (req: Request, res: Response, next: NextFunction) => {
+    // Extract the id from the request parameters.
+    const { id } = req.params;
 
-  try {
-    // Connect to fauna using the faunaClient. The query method accepts
-    // an FQL query as a parameter as well as an optional return type. In this
-    // case, we are using the DocumentT type to specify that the query will return
-    // a single document representing an Order.
-    const { data: cart } = await faunaClient.query<DocumentT<Order>>(
-      // Get the customer's cart by id, using the ! operator to assert that the document exists.
-      // If the document does not exist, Fauna will throw a document_not_found error.
-      fql`Customer.byId(${id})!.cart`
-    );
+    try {
+      // Connect to fauna using the faunaClient. The query method accepts
+      // an FQL query as a parameter as well as an optional return type. In this
+      // case, we are using the DocumentT type to specify that the query will return
+      // a single document representing an Order.
+      const { data: cart } = await faunaClient.query<DocumentT<Order>>(
+        // Get the customer's cart by id, using the ! operator to assert that the document exists.
+        // If the document does not exist, Fauna will throw a document_not_found error.
+        fql`Customer.byId(${id})!.cart`
+      );
 
-    // Return the cart, stripping out any unnecessary fields.
-    return res.status(200).send(docTo<Order>(cart));
-  } catch (error: any) {
-    // A ServiceError represents an error that occurred within Fauna.
-    if (error instanceof ServiceError) {
-      if (error.code === "document_not_found") {
-        // If the customer does not exist, return a 404.
-        return res
-          .status(404)
-          .send({ message: `No customer with id '${id}' exists.` });
+      // Return the cart, stripping out any unnecessary fields.
+      return res.status(200).send(docTo<Order>(cart));
+    } catch (error: any) {
+      // A ServiceError represents an error that occurred within Fauna.
+      if (error instanceof ServiceError) {
+        if (error.code === "document_not_found") {
+          // If the customer does not exist, return a 404.
+          return res
+            .status(404)
+            .send({ message: `No customer with id '${id}' exists.` });
+        }
       }
+      // Pass other errors to the generic error-handling middleware.
+      next(error);
     }
-
-    // Return a generic 500 if we encounter an unexpected error.
-    return res.status(500).send({ message: "Internal Server Error" });
   }
-});
+);
+
+// Use the middleware to handle 401 and other generic errors.
+router.use(errorHandler);
 
 export default router;

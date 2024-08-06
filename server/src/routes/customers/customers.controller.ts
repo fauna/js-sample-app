@@ -1,12 +1,13 @@
 import { fql, ServiceError, type DocumentT } from "fauna";
 import { faunaClient } from "../../fauna/fauna-client";
-import { Request, Response, Router } from "express";
+import { Request, Response, Router, NextFunction } from "express";
 import { Customer } from "./customers.model";
 import { docTo } from "../../fauna/util";
 import {
   validateCustomerCreate,
   validateCustomerUpdate,
 } from "../../middleware/customers";
+import { errorHandler } from "../../middleware/errors";
 
 const router = Router();
 
@@ -16,44 +17,46 @@ const router = Router();
  * @param id
  * @returns Customer
  */
-router.get("/customers/:id", async (req: Request, res: Response) => {
-  // Extract the id from the request parameters.
-  const { id } = req.params;
+router.get(
+  "/customers/:id",
+  async (req: Request, res: Response, next: NextFunction) => {
+    // Extract the id from the request parameters.
+    const { id } = req.params;
 
-  try {
-    // Connect to fauna using the faunaClient. The query method accepts
-    // an FQL query as a parameter as well as an optional return type. In this
-    // case, we are using the DocumentT type to specify that the query will return
-    // a single document representing a Customer.
-    const { data: customer } = await faunaClient.query<DocumentT<Customer>>(
-      // Get the Customer document by id, using the ! operator to assert that the document exists.
-      // If the document does not exist, Fauna will throw a document_not_found error.
-      fql`Customer.byId(${id})!`
-    );
+    try {
+      // Connect to fauna using the faunaClient. The query method accepts
+      // an FQL query as a parameter as well as an optional return type. In this
+      // case, we are using the DocumentT type to specify that the query will return
+      // a single document representing a Customer.
+      const { data: customer } = await faunaClient.query<DocumentT<Customer>>(
+        // Get the Customer document by id, using the ! operator to assert that the document exists.
+        // If the document does not exist, Fauna will throw a document_not_found error.
+        fql`Customer.byId(${id})!`
+      );
 
-    // Return the customer, stripping out any unnecessary fields.
-    return res.status(200).send(docTo<Customer>(customer));
-  } catch (error: unknown) {
-    // Handle errors returned by Fauna here. A ServiceError represents an
-    // error that occurred within Fauna.
-    if (error instanceof ServiceError) {
-      if (error.code === "invalid_argument") {
-        // If the id is not valid, return a 400.
-        return res
-          .status(400)
-          .send({ message: `Invalid id '${id}' provided.` });
-      } else if (error.code === "document_not_found") {
-        // If the document does not exist, return a 404.
-        return res
-          .status(404)
-          .send({ message: `No customer with id '${id}' exists.` });
+      // Return the customer, stripping out any unnecessary fields.
+      return res.status(200).send(docTo<Customer>(customer));
+    } catch (error: unknown) {
+      // Handle errors returned by Fauna here. A ServiceError represents an
+      // error that occurred within Fauna.
+      if (error instanceof ServiceError) {
+        if (error.code === "invalid_argument") {
+          // If the id is not valid, return a 400.
+          return res
+            .status(400)
+            .send({ message: `Invalid id '${id}' provided.` });
+        } else if (error.code === "document_not_found") {
+          // If the document does not exist, return a 404.
+          return res
+            .status(404)
+            .send({ message: `No customer with id '${id}' exists.` });
+        }
       }
+      // Pass other errors to the generic error-handling middleware.
+      next(error);
     }
-
-    // Return a generic 500 if we encounter an unexpected error.
-    return res.status(500).send({ message: "Internal Server Error" });
   }
-});
+);
 
 /**
  * Create a new customer.
@@ -66,7 +69,7 @@ router.get("/customers/:id", async (req: Request, res: Response) => {
 router.post(
   "/customers",
   validateCustomerCreate,
-  async (req: Request, res: Response) => {
+  async (req: Request, res: Response, next: NextFunction) => {
     // Extract fields from the request body.
     const { name, email, address } = req.body;
 
@@ -100,9 +103,8 @@ router.post(
             .send({ message: "A customer with that email already exists." });
         }
       }
-
-      // Return a generic 500 if we encounter an unexpected error.
-      return res.status(500).send({ message: "Internal Server Error" });
+      // Pass other errors to the generic error-handling middleware.
+      next(error);
     }
   }
 );
@@ -119,7 +121,7 @@ router.post(
 router.patch(
   "/customers/:id",
   validateCustomerUpdate,
-  async (req: Request, res: Response) => {
+  async (req: Request, res: Response, next: NextFunction) => {
     // Extract the id from the request parameters.
     const { id } = req.params;
     // Extract fields from the request body.
@@ -154,11 +156,13 @@ router.patch(
             .send({ message: "A customer with that email already exists." });
         }
       }
-
-      // Return a generic 500 if we encounter an unexpected error.
-      return res.status(500).send({ message: "Internal Server Error" });
+      // Pass other errors to the generic error-handling middleware.
+      next(error);
     }
   }
 );
+
+// Use the middleware to handle 401 and other generic errors.
+router.use(errorHandler);
 
 export default router;
