@@ -15,7 +15,7 @@ docs](https://docs.fauna.com/fauna/current/get_started/overview).
 
 The sample app uses the following Fauna features:
 
-- FQL queries ([Code example](server/src/routes/products/products.controller.ts))
+- FQL queries ([Code example](/src/routes/products/products.controller.ts))
 
   Fauna stores data as JSON-like documents in collections. The app uses FQL
   queries to retrieve, create, and update collection documents in a Fauna
@@ -29,21 +29,21 @@ The sample app uses the following Fauna features:
 
   See [Query data with FQL](https://docs.fauna.com/fauna/current/learn/query/).
 
-- Document relationships ([Code example](server/schema/collections.fsl))
+- Document relationships ([Code example](/schema/collections.fsl))
 
   Fauna supports dynamic one-to-one, one-to-many, and many-to-many relationships
   between documents. You can use relationships to model complex data structures
   without duplicating data. See [Document
   relationships](https://docs.fauna.com/fauna/current/learn/query/relationships/).
 
-- Document type definitions ([Code example](server/schema/collections.fsl))
+- Document type definitions ([Code example](/schema/collections.fsl))
 
   You can use document types and zero-downtime migrations to progressively
   enforce and evolve an app's data model. You define document types in
   collection schemas using Fauna Schema Language (FSL). See
   [Schema](https://docs.fauna.com/fauna/current/learn/schema/).
 
-- User-defined functions ([Code example](server/schema/functions.fsl))
+- User-defined functions ([Code example](/schema/functions.fsl))
 
   You can use user-defined functions (UDFs) to encapsulate business logic as a
   manageable, maintainable resource in Fauna. You define UDFs as FSL schema. See
@@ -87,7 +87,7 @@ docs](https://docs.fauna.com/fauna/current/tools/shell/).
     - `ECommerce` is the default database for the project.
 
     - The project stores Fauna Schema Language (FSL) files in the
-      `server/schema` directory.
+      `/schema` directory.
 
 1. Log in to Fauna using the Fauna CLI:
 
@@ -106,7 +106,7 @@ docs](https://docs.fauna.com/fauna/current/tools/shell/).
     fauna create-database --environment='' ECommerce
     ```
 
-1.  Push the FSL files in the `server/schema` directory to the `ECommerce`
+1.  Push the FSL files in the `/schema` directory to the `ECommerce`
     database:
 
     ```sh
@@ -115,7 +115,7 @@ docs](https://docs.fauna.com/fauna/current/tools/shell/).
 
     When prompted, accept and push the changes. The push creates the collections
     and user-defined functions (UDFs) defined in the FSL files of the
-    `server/schema` directory.
+    `/schema` directory.
 
 1. Create a key with the `server` role for the `ECommerce` database:
 
@@ -126,14 +126,7 @@ docs](https://docs.fauna.com/fauna/current/tools/shell/).
     Copy the returned `secret`. The app can use the key's secret to authenticate
     requests to the database.
 
-1. Navigate to the `server` subdirectory. For example:
-
-    ```sh
-    cd server
-    ```
-
-1. In the `server` subdirectory, make a copy of the `.env.example` file and name the
-   copy `.env`. For example:
+1. Make a copy of the `.env.example` file and name the copy `.env`. For example:
 
     ```sh
     cp .env.example .env
@@ -150,7 +143,7 @@ docs](https://docs.fauna.com/fauna/current/tools/shell/).
 
 ## Run the app
 
-The app runs an HTTP API server. From the `server` subdirectory, run:
+The app runs an HTTP API server. From the root directory, run:
 
 ```sh
 npm install && npm run dev
@@ -161,7 +154,7 @@ Once started, the local server is available at http://localhost:8000.
 ## Make HTTP API requests
 
 The app's HTTP API endpoints are defined in `*.controller.ts` files in the
-`server/src/routes` directory.
+`/src/routes` directory.
 
 You can use the endpoints to make API requests that read and write data from
 the `ECommerce` database.
@@ -195,7 +188,7 @@ Dashboard](https://dashboard.fauna.com/).
 The app includes tests that check the app's API endpoints and create related documents
 in the `ECommerce` database.
 
-From the `server` subdirectory, run:
+From the root directory, run:
 
 ```sh
 npm install && npm run test

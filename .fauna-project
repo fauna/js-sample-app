@@ -1,4 +1,4 @@
-schema_directory=./server/schema
+schema_directory=./schema
 default=dev
 
 [environment.dev]

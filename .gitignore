@@ -1,3 +1,7 @@
+.env
+build
+node_modules
+
 # emacs
 *~
 *#
