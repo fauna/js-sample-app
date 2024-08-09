@@ -151,10 +151,15 @@ npm install && npm run dev
 
 Once started, the local server is available at http://localhost:8000.
 
-## Make HTTP API requests
+## HTTP API endpoints
 
 The app's HTTP API endpoints are defined in `*.controller.ts` files in the
 `/src/routes` directory.
+
+Reference documentation for the endpoints is available at
+https://fauna.github.io/js-sample-app/.
+
+### Make API requests
 
 You can use the endpoints to make API requests that read and write data from
 the `ECommerce` database.
