@@ -3,9 +3,10 @@
 This sample app shows how you can use [Fauna](https://fauna.com) in a
 production application.
 
-The app uses Node.js and the Fauna JavaScript driver to create HTTP API
-endpoints for an e-commerce store. The source code includes comments that highlight
-best practices for the driver and Fauna Query Language (FQL) queries.
+The app uses Node.js and the [Fauna v10 JavaScript
+driver](https://github.com/fauna/fauna-js) to create HTTP API endpoints for an
+e-commerce store. The source code includes comments that highlight best
+practices for the driver and Fauna Query Language (FQL) queries.
 
 This README covers how to set up and run the app locally. For an overview of
 Fauna, see the [Fauna
