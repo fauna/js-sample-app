@@ -3,9 +3,10 @@
 This sample app shows how you can use [Fauna](https://fauna.com) in a
 production application.
 
-The app uses Node.js and the Fauna JavaScript driver to create HTTP API
-endpoints for an e-commerce store. The source code includes comments that highlight
-best practices for the driver and Fauna Query Language (FQL) queries.
+The app uses Node.js and the [Fauna v10 JavaScript
+driver](https://github.com/fauna/fauna-js) to create HTTP API endpoints for an
+e-commerce store. The source code includes comments that highlight best
+practices for the driver and Fauna Query Language (FQL) queries.
 
 This README covers how to set up and run the app locally. For an overview of
 Fauna, see the [Fauna
@@ -151,10 +152,15 @@ npm install && npm run dev
 
 Once started, the local server is available at http://localhost:8000.
 
-## Make HTTP API requests
+## HTTP API endpoints
 
 The app's HTTP API endpoints are defined in `*.controller.ts` files in the
 `/src/routes` directory.
+
+Reference documentation for the endpoints is available at
+https://fauna.github.io/js-sample-app/.
+
+### Make API requests
 
 You can use the endpoints to make API requests that read and write data from
 the `ECommerce` database.
