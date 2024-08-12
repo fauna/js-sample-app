@@ -50,8 +50,8 @@ export const mockProduct = (overrides?: {
   const fakeDescription = faker.commerce.productDescription();
   return {
     name: overrides?.name || fakeName,
-    price: overrides?.price || 100.0,
-    stock: overrides?.stock || 10,
+    price: overrides?.price || 100_00,
+    stock: overrides?.stock || 10_00,
     description: overrides?.description || fakeDescription,
     category: overrides?.category || faker.commerce.department(),
   };
