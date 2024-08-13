@@ -99,31 +99,6 @@ components:
         id:
           type: string
           description: "Unique, auto-generated ID for the customer."
-        cart:
-          type: object
-          description: |
-            Current order for the customer with the `cart` status. A customer
-            can only have one order with the `cart` status at a time.
-
-            If the customer doesn't have a cart order, `cart` is `null`.
-
-            Internally, the `Customer` collection uses a computed field to
-            fetch the customer's `cart` at query time.
-          properties:
-            id:
-              type: string
-              description: |
-                ID for the customer's cart order.
-        orders:
-          type: object
-          properties:
-            after:
-              type: string
-              description: |
-                Pagination token for a list of customer's orders.
-
-                Internally, the `Customer` collection uses a computed field to
-                fetch the customer's `orders` at query time.
         name:
           type: string
           description: Customer name.
@@ -152,10 +127,6 @@ components:
               description: Country of the customer's mailing address.
       example:
         id: "111"
-        cart:
-          id: "222"
-        orders:
-          after: hdW...
         name: John Doe
         email: john.doe@example.com
         address:
