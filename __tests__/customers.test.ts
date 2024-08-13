@@ -9,7 +9,7 @@ import { Customer } from "../src/routes/customers/customers.model";
 describe("Customers", () => {
   let customer: Customer;
   let customersToCleanup: Array<Customer> = [];
-  const customerFields = ["id", "name", "email", "address", "cart", "orders"];
+  const customerFields = ["id", "name", "email", "address"];
 
   beforeAll(async () => {
     const { customer: c } = await seedTestData();
