@@ -354,66 +354,14 @@ components:
             `status` to `processing`.
       example:
         status: processing
-    OrderResponse:
-      type: object
-      properties:
-        id:
-          type: string
-          description: "Unique, auto-generated ID for the order."
-        items:
-          type: object
-          properties:
-            after:
-              type: string
-              description: Pagination token for a list of items in the order.
-        total:
-          type: integer
-          description: Total number of items in the order.
-        status:
-          type: string
-          description: Current status of the order.
-          enum:
-            - cart
-            - processing
-            - shipped
-            - delivered
-        customer:
-          type: object
-          description: Information about the customer who placed the order.
-          properties:
-            id:
-              type: string
-              description: ID of the customer.
-        createdAt:
-          type: object
-          description: Timestamp of when the order was created.
-          properties:
-            isoString:
-              type: string
-              format: date-time
-              description: ISO 8601 formatted timestamp.
-        payment:
-          type: object
-          description: Payment details for the order (currently empty).
-      example:
-        id: "123"
-        items:
-          after: hdW...
-        total: 0
-        status: cart
-        customer:
-          id: "456"
-        createdAt:
-          isoString: "2099-08-09T16:43:07.153186Z"
-        payment: {}
-    CustomerOrderPageResponse:
+    OrderPageResponse:
       type: object
       properties:
         results:
           type: array
-          description: Page of customer orders.
+          description: Page of orders.
           items:
-            $ref: "#/components/schemas/CustomerOrderResponse"
+            $ref: "#/components/schemas/OrderResponse"
         nextToken:
           type: string
           description: |
@@ -424,187 +372,116 @@ components:
           - id: "123"
             payment: {}
             createdAt:
-              isoString: "2024-08-09T21:06:29.209471Z"
+              isoString: "2099-08-09T16:43:07.153186Z"
             status: cart
-            total: 53.92
+            total: 899
             items:
-              data:
-                - coll:
-                    name: OrderItem
-                  id: "456"
-                  ts:
-                    isoString: "2024-08-09T21:06:29.422Z"
-                  order:
-                    coll:
-                      name: Order
+              - product:
+                  id: "123"
+                  name: For Whom the Bell Tolls
+                  price: 899
+                  description: A book by Ernest Hemingway
+                  stock: 10
+                  category:
                     id: "123"
-                  product:
-                    coll:
-                      name: Product
-                    id: "789"
-                  quantity: 2
-                - coll:
-                    name: OrderItem
-                  id: "012"
-                  ts:
-                    isoString: "2024-08-09T21:06:29.422Z"
-                  order:
-                    coll:
-                      name: Order
-                    id: "123"
-                  product:
-                    coll:
-                      name: Product
-                    id: "345"
-                  quantity: 1
-                - coll:
-                    name: OrderItem
-                  id: "678"
-                  ts:
-                    isoString: "2024-08-09T21:06:29.422Z"
-                  order:
-                    coll:
-                      name: Order
-                    id: "123"
-                  product:
-                    coll:
-                      name: Product
-                    id: "901"
-                  quantity: 3
+                    name: books
+                    description: Bargain books!
+                quantity: 1
             customer:
               id: "111"
               name: John Doe
               email: john.doe@example.com
+              address:
+                street: 123 Main St
+                city: San Francisco
+                state: CA
+                postalCode: "12345"
+                country: United States
         nextToken: hdW...
-    CustomerOrderResponse:
+    OrderResponse:
       type: object
       properties:
         id:
           type: string
+          description: "Unique, auto-generated ID for the order."
         payment:
           type: object
+          description: Payment details for the order (currently empty).
         createdAt:
           type: object
+          description: Timestamp of when the order was created.
           properties:
             isoString:
               type: string
               format: date-time
+              description: ISO 8601 formatted timestamp.
         status:
           type: string
+          description: Current status of the order.
           enum:
             - cart
             - processing
             - shipped
             - delivered
         total:
-          type: number
-          format: float
+          type: integer
+          description: Total cost of the order.
         items:
-          type: object
-          properties:
-            data:
-              type: array
-              items:
-                $ref: "#/components/schemas/OrderItem"
+          type: array
+          description: Items in the order.
+          items:
+            $ref: "#/components/schemas/OrderItem"
         customer:
-          $ref: "#/components/schemas/Customer"
+          $ref: "#/components/schemas/CustomerResponse"
       example:
         id: "123"
         payment: {}
         createdAt:
-          isoString: "2024-08-09T21:06:29.209471Z"
+          isoString: "2099-08-09T16:43:07.153186Z"
         status: cart
-        total: 53.92
+        total: 899
         items:
-          data:
-            - coll:
-                name: OrderItem
-              id: "456"
-              ts:
-                isoString: "2024-08-09T21:06:29.422Z"
-              order:
-                coll:
-                  name: Order
+          - product:
+              id: "123"
+              name: For Whom the Bell Tolls
+              price: 899
+              description: A book by Ernest Hemingway
+              stock: 10
+              category:
                 id: "123"
-              product:
-                coll:
-                  name: Product
-                id: "789"
-              quantity: 2
-            - coll:
-                name: OrderItem
-              id: "012"
-              ts:
-                isoString: "2024-08-09T21:06:29.422Z"
-              order:
-                coll:
-                  name: Order
-                id: "123"
-              product:
-                coll:
-                  name: Product
-                id: "345"
-              quantity: 1
-            - coll:
-                name: OrderItem
-              id: "678"
-              ts:
-                isoString: "2024-08-09T21:06:29.422Z"
-              order:
-                coll:
-                  name: Order
-                id: "123"
-              product:
-                coll:
-                  name: Product
-                id: "901"
-              quantity: 3
+                name: books
+                description: Bargain books!
+            quantity: 1
         customer:
           id: "111"
           name: John Doe
           email: john.doe@example.com
+          address:
+            street: 123 Main St
+            city: San Francisco
+            state: CA
+            postalCode: "12345"
+            country: United States
     OrderItem:
       type: object
       properties:
-        coll:
-          type: object
-          properties:
-            name:
-              type: string
-        id:
-          type: string
-        ts:
-          type: object
-          properties:
-            isoString:
-              type: string
-              format: date-time
-        order:
-          $ref: "#/components/schemas/CollectionReference"
         product:
-          $ref: "#/components/schemas/CollectionReference"
+          $ref: "#/components/schemas/ProductResponse"
         quantity:
           type: integer
-    CollectionReference:
-      type: object
-      properties:
-        coll:
-          type: object
-          properties:
-            name:
-              type: string
-        id:
-          type: string
-    Customer:
-      type: object
-      properties:
-        id:
-          type: string
-        name:
-          type: string
-        email:
-          type: string
-          format: email
+          description: Quantity of the product in the order.
+      example:
+        product:
+          id: "123"
+          name: For Whom the Bell Tolls
+          price: 899
+          description: A book by Ernest Hemingway
+          stock: 7
+          category:
+            id: "123"
+            name: books
+            description: Bargain books!
+          quantity: 1
     OrderItemRequest:
       type: object
       required:
@@ -620,46 +497,13 @@ components:
           description: >
             Quantity of the product to add to the order.
 
-
             Must be a non-negative integer. The quantity must be less than the
             product's `stock`.
 
-
             Internally, the `OrderItem` collection uses a check constraint to
-
             ensure `quantity` is a positive integer.
       example:
         productName: The Old Man and the Sea
-        quantity: 1
-    OrderItemResponse:
-      type: object
-      properties:
-        id:
-          type: string
-          description: ID of the item.
-        order:
-          type: object
-          description: Order for the item.
-          properties:
-            id:
-              type: string
-              description: ID of the order.
-        product:
-          type: object
-          description: Product of the item.
-          properties:
-            id:
-              type: string
-              description: ID of the product.
-        quantity:
-          type: integer
-          description: Quantity of products in the item.
-      example:
-        id: 123
-        order:
-          id: 456
-        product:
-          id: 789
         quantity: 1
     ErrorResponse:
       type: object
@@ -1408,7 +1252,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/OrderItemResponse"
+                $ref: "#/components/schemas/OrderResponse"
         "400":
           description: Bad request
           content:
@@ -1597,7 +1441,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/CustomerOrderPageResponse"
+                $ref: "#/components/schemas/OrderPageResponse"
         "400":
           description: Bad request
           content:

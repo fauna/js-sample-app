@@ -45,6 +45,8 @@ function createOrUpdateCartItem(customerId, productName, quantity) {
     // If the order item exists, update the quantity.
     orderItem!.update({ quantity: quantity })
   }
+  // Return the customer's updated cart.
+  customer!.cart
 }
 
 function getOrCreateCart(id) {
@@ -68,7 +70,7 @@ function getOrCreateCart(id) {
 
 function checkout(orderId, status, payment) {
   // Find the order by id, using the ! operator to assert that the order exists.
-  let order = Order.byId(orderId)!
+  let order: Any = Order.byId(orderId)!
 
   // Check that we are setting the order to the processing status. If not, we should
   // not be calling this function.
