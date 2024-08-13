@@ -134,7 +134,20 @@ router.post(
           if (category == null) abort("Category does not exist.")
           // Create the product with the given values.
           let args = { name: ${name}, price: ${price}, stock: ${stock}, description: ${description}, category: category }
-          Product.create(args)
+          let product: Any = Product.create(args)
+          // Use projection to only return the fields you need.
+          product {
+            id,
+            name,
+            price,
+            description,
+            stock,
+            category {
+              id,
+              name,
+              description
+            }
+          }
         `
       );
 
@@ -206,11 +219,34 @@ router.patch(
           let fields = ${{ name, price, stock, description }}
           if (category != null) {
             // If a category was provided, update the product with the new category document as well as
-            // any other fields that were provided.
-            product!.update(Object.assign(fields, { category: category }))
+            // any other fields that were provided. Use projection to only return the fields you need.
+            product!.update(Object.assign(fields, { category: category })) {
+              id,
+              name,
+              price,
+              description,
+              stock,
+              category {
+                id,
+                name,
+                description
+              }
+            }
           } else {
             // If no category was provided, update the product with the fields that were provided.
-            product!.update(fields)
+            // Use projection to only return the fields you need.
+            product!.update(fields) {
+              id,
+              name,
+              price,
+              description,
+              stock,
+              category {
+                id,
+                name,
+                description
+              }
+            }
           }
         `
       );
