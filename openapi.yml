@@ -205,7 +205,7 @@ components:
             description: A book by Ernest Hemingway
             stock: 10
             category:
-              id: "456"
+              id: "123"
               name: books
               description: Bargain books!
         nextToken: hdW...
@@ -250,39 +250,6 @@ components:
           id: "123"
           name: books
           description: Bargain books!
-    ProductPostPatchResponse:
-      type: object
-      properties:
-        id:
-          type: string
-          description: "Unique, auto-generated ID for the product."
-        name:
-          type: string
-          description: Name of the product.
-        price:
-          type: number
-          description: Price of the product in USD cents.
-        stock:
-          type: integer
-          description: Quantity of the product available in stock.
-        description:
-          type: string
-          description: Description of the product.
-        category:
-          type: object
-          description: Category to which the product belongs.
-          properties:
-            id:
-              type: string
-              description: "Unique, auto-generated ID for the category."
-      example:
-        id: "123"
-        name: The Old Man and the Sea
-        price: 899
-        stock: 10
-        description: A book by Ernest Hemingway
-        category:
-          id: "123"
     FilteredProductPageResponse:
       type: object
       properties:
@@ -880,7 +847,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ProductPostPatchResponse"
+                $ref: "#/components/schemas/ProductResponse"
         "400":
           description: Bad request
           content:
@@ -984,7 +951,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ProductPostPatchResponse"
+                $ref: "#/components/schemas/ProductResponse"
         "400":
           description: Bad request
           content:
