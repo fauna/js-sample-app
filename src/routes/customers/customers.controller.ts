@@ -11,6 +11,16 @@ import { errorHandler } from "../../middleware/errors";
 
 const router = Router();
 
+// Project Customer document fields for consistent responses.
+const customerResponse = fql`
+  customer {
+    id,
+    name,
+    email,
+    address
+  }
+`;
+
 /**
  * Get a customer by id.
  * @route {GET} /customers/:id
@@ -33,12 +43,9 @@ router.get(
         // If the document does not exist, Fauna will throw a document_not_found error.
         // Use projection to only return the fields you need.
         fql`let customer: Any = Customer.byId(${id})!
-          customer {
-            id,
-            name,
-            email,
-            address
-          }`
+          // Return projected fields for the response.
+          ${customerResponse}
+        `
       );
 
       // Return the customer, stripping out any unnecessary fields.
@@ -89,12 +96,9 @@ router.post(
         // Create a new Customer document with the provided fields.
         // Use projection to only return the fields you need.
         fql`let customer: Any = Customer.create(${{ name, email, address }})
-          customer {
-            id,
-            name,
-            email,
-            address
-          }`
+          // Return projected fields for the response.
+          ${customerResponse}
+        `
       );
 
       // Return the created customer, stripping out any unnecessary fields.
@@ -151,12 +155,9 @@ router.patch(
         // If the document does not exist, Fauna will throw a document_not_found error.
         // Use projection to only return the fields you need.
         fql`let customer: Any = Customer.byId(${id})!.update(${{ name, email, address }})
-          customer {
-            id,
-            name,
-            email,
-            address
-          }`
+          // Return projected fields for the response.
+          ${customerResponse}
+        `
       );
 
       // Return the updated customer, stripping out any unnecessary fields.
