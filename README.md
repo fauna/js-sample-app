@@ -97,7 +97,7 @@ docs](https://docs.fauna.com/fauna/current/tools/shell/).
     - `ECommerce` is the default database for the project.
 
     - The project stores Fauna Schema Language (FSL) files in the
-      `schema/` directory.
+      `schema` directory.
 
 1. Log in to Fauna using the Fauna CLI:
 
@@ -116,7 +116,7 @@ docs](https://docs.fauna.com/fauna/current/tools/shell/).
     fauna create-database --environment='' ECommerce
     ```
 
-1.  Push the FSL files in the `schema/` directory to the `ECommerce`
+1.  Push the FSL files in the `schema` directory to the `ECommerce`
     database:
 
     ```sh
@@ -125,7 +125,7 @@ docs](https://docs.fauna.com/fauna/current/tools/shell/).
 
     When prompted, accept and push the changes. The push creates the collections
     and user-defined functions (UDFs) defined in the FSL files of the
-    `schema/` directory.
+    `schema` directory.
 
 1. Create a key with the `server` role for the `ECommerce` database:
 
@@ -180,7 +180,7 @@ Once started, the local server is available at http://localhost:8000.
 ## HTTP API endpoints
 
 The app's HTTP API endpoints are defined in `*.controller.ts` files in the
-`src/routes/` directory.
+`src/routes` directory.
 
 Reference documentation for the endpoints is available at
 https://fauna.github.io/js-sample-app/.
@@ -216,7 +216,7 @@ You can further expand the app by adding fields and endpoints.
 As an example, the following steps adds a computed `totalPurchaseAmt` field to
 Customer documents and related API responses:
 
-1. If you haven't already, [add the sample data](#add-sample-data):
+1. If you haven't already, add the sample data:
 
     ```sh
     npm install && npm run test
