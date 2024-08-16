@@ -97,9 +97,9 @@ docs](https://docs.fauna.com/fauna/current/tools/shell/).
     - `ECommerce` is the default database for the project.
 
     - The project stores Fauna Schema Language (FSL) files in the
-      `/schema` directory.
+      `schema` directory.
 
-1. Log in to Fauna using the Fauna CLI:
+2. Log in to Fauna using the Fauna CLI:
 
     ```sh
     fauna cloud-login
@@ -110,13 +110,13 @@ docs](https://docs.fauna.com/fauna/current/tools/shell/).
     [Forgot Password](https://dashboard.fauna.com/forgot-password) workflow.
 
 
-1. Use the Fauna CLI to create the `ECommerce` database:
+3. Use the Fauna CLI to create the `ECommerce` database:
 
     ```sh
     fauna create-database --environment='' ECommerce
     ```
 
-1.  Push the FSL files in the `/schema` directory to the `ECommerce`
+4.  Push the FSL files in the `schema` directory to the `ECommerce`
     database:
 
     ```sh
@@ -125,9 +125,9 @@ docs](https://docs.fauna.com/fauna/current/tools/shell/).
 
     When prompted, accept and push the changes. The push creates the collections
     and user-defined functions (UDFs) defined in the FSL files of the
-    `/schema` directory.
+    `schema` directory.
 
-1. Create a key with the `server` role for the `ECommerce` database:
+5. Create a key with the `server` role for the `ECommerce` database:
 
     ```sh
     fauna create-key --environment='' ECommerce server
@@ -136,13 +136,13 @@ docs](https://docs.fauna.com/fauna/current/tools/shell/).
     Copy the returned `secret`. The app can use the key's secret to authenticate
     requests to the database.
 
-1. Make a copy of the `.env.example` file and name the copy `.env`. For example:
+6. Make a copy of the `.env.example` file and name the copy `.env`. For example:
 
     ```sh
     cp .env.example .env
     ```
 
-1.  In `.env`, set the `FAUNA_SECRET` environment variable to the secret you
+7.  In `.env`, set the `FAUNA_SECRET` environment variable to the secret you
     copied earlier:
 
     ```
@@ -180,7 +180,7 @@ Once started, the local server is available at http://localhost:8000.
 ## HTTP API endpoints
 
 The app's HTTP API endpoints are defined in `*.controller.ts` files in the
-`/src/routes` directory.
+`src/routes` directory.
 
 Reference documentation for the endpoints is available at
 https://fauna.github.io/js-sample-app/.
@@ -192,22 +192,112 @@ You can use the endpoints to make API requests that read and write data from
 the `ECommerce` database.
 
 For example, with the local server running in a separate terminal tab, run the
-following curl request to the `POST /customers` endpoint. The request creates a
-`Customer` collection document in the `ECommerce` database.
+following curl request to the `POST /products` endpoint. The request creates a
+`Product` collection document in the `ECommerce` database.
 
-```
+```sh
 curl -v \
-  http://localhost:8000/customers \
+  http://localhost:8000/products \
   -H "Content-Type: application/json" \
   -d '{
-    "name": "John Doe",
-    "email": "john.doe@example.com",
-    "address": {
-      "street": "123 Main St",
-      "city": "San Francisco",
-      "state": "CA",
-      "postalCode": "12345",
-      "country": "USA"
-    }
+    "name": "The Old Man and the Sea",
+    "price": 899,
+    "description": "A book by Ernest Hemingway",
+    "stock": 10,
+    "category": "books"
   }'
 ```
+
+
+## Expand the app
+
+You can further expand the app by adding fields and endpoints.
+
+As an example, the following steps adds a computed `totalPurchaseAmt` field to
+Customer documents and related API responses:
+
+1. If you haven't already, add the sample data:
+
+    ```sh
+    npm install && npm run test
+    ```
+
+2. In `schema/collections.fsl`, add the following `totalPurchaseAmt` computed
+  field definition to the `Customer` collection:
+
+    ```diff
+    collection Customer {
+      ...
+      // Use a computed field to get the set of Orders for a customer.
+      compute orders: Set<Order> = (customer => Order.byCustomer(customer))
+
+    + // Use a computed field to calculate the customer's cumulative purchase total.
+    + // The field sums purchase `total` values from the customer's linked Order documents.
+    + compute totalPurchaseAmt: Number = (customer => customer.orders.fold(0, (sum, order) => {
+    +   let order: Any = order
+    +   sum + order.total
+    + }))
+      ...
+    }
+    ...
+    ```
+
+    Save `schema/collections.fsl`.
+
+3.  Push the updated schema to the `ECommerce` database:
+
+    ```sh
+    fauna schema push
+    ```
+
+4. In `src/routes/customers/customers.controller.ts`, add the
+   `totalPurchaseAmt` field to the `customerResponse` FQL template:
+
+    ```diff
+    // Project Customer document fields for consistent responses.
+    const customerResponse = fql`
+      customer {
+        id,
+        name,
+        email,
+    +   totalPurchaseAmt,
+        address
+      }
+    `;
+    ```
+
+    Save `src/routes/customers/customers.controller.ts`.
+
+   Customer-related endpoints use this template to project Customer
+   document fields in responses.
+
+5. Start the app server:
+
+    ```sh
+    npm install && npm run dev
+    ```
+
+6. With the local server running in a separate terminal tab, run the
+   following curl request to the `POST /customers` endpoint:
+
+    ```sh
+    curl -v http://localhost:8000/customers/999
+    ```
+
+    The response includes the computed `totalPurchaseAmt` field:
+
+    ```json
+    {
+      "id": "999",
+      "name": "Valued Customer",
+      "email": "valuedcustomer@fauna.com",
+      "totalPurchaseAmt": 27000,
+      "address": {
+        "street": "123 Main St",
+        "city": "San Francisco",
+        "state": "CA",
+        "postalCode": "12345",
+        "country": "United States"
+      }
+    }
+    ```
