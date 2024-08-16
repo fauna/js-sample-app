@@ -99,7 +99,7 @@ docs](https://docs.fauna.com/fauna/current/tools/shell/).
     - The project stores Fauna Schema Language (FSL) files in the
       `schema` directory.
 
-1. Log in to Fauna using the Fauna CLI:
+2. Log in to Fauna using the Fauna CLI:
 
     ```sh
     fauna cloud-login
@@ -110,13 +110,13 @@ docs](https://docs.fauna.com/fauna/current/tools/shell/).
     [Forgot Password](https://dashboard.fauna.com/forgot-password) workflow.
 
 
-1. Use the Fauna CLI to create the `ECommerce` database:
+3. Use the Fauna CLI to create the `ECommerce` database:
 
     ```sh
     fauna create-database --environment='' ECommerce
     ```
 
-1.  Push the FSL files in the `schema` directory to the `ECommerce`
+4.  Push the FSL files in the `schema` directory to the `ECommerce`
     database:
 
     ```sh
@@ -127,7 +127,7 @@ docs](https://docs.fauna.com/fauna/current/tools/shell/).
     and user-defined functions (UDFs) defined in the FSL files of the
     `schema` directory.
 
-1. Create a key with the `server` role for the `ECommerce` database:
+5. Create a key with the `server` role for the `ECommerce` database:
 
     ```sh
     fauna create-key --environment='' ECommerce server
@@ -136,13 +136,13 @@ docs](https://docs.fauna.com/fauna/current/tools/shell/).
     Copy the returned `secret`. The app can use the key's secret to authenticate
     requests to the database.
 
-1. Make a copy of the `.env.example` file and name the copy `.env`. For example:
+6. Make a copy of the `.env.example` file and name the copy `.env`. For example:
 
     ```sh
     cp .env.example .env
     ```
 
-1.  In `.env`, set the `FAUNA_SECRET` environment variable to the secret you
+7.  In `.env`, set the `FAUNA_SECRET` environment variable to the secret you
     copied earlier:
 
     ```
@@ -222,7 +222,7 @@ Customer documents and related API responses:
     npm install && npm run test
     ```
 
-1. In `schema/collections.fsl`, add the following `totalPurchaseAmt` computed
+2. In `schema/collections.fsl`, add the following `totalPurchaseAmt` computed
   field definition to the `Customer` collection:
 
     ```diff
@@ -244,13 +244,13 @@ Customer documents and related API responses:
 
     Save `schema/collections.fsl`.
 
-1.  Push the updated schema to the `ECommerce` database:
+3.  Push the updated schema to the `ECommerce` database:
 
     ```sh
     fauna schema push
     ```
 
-1. In `src/routes/customers/customers.controller.ts`, add the
+4. In `src/routes/customers/customers.controller.ts`, add the
    `totalPurchaseAmt` field to the `customerResponse` FQL template:
 
     ```diff
@@ -271,13 +271,13 @@ Customer documents and related API responses:
    Customer-related endpoints use this template to project Customer
    document fields in responses.
 
-1. Start the app server:
+5. Start the app server:
 
     ```sh
     npm install && npm run dev
     ```
 
-1. With the local server running in a separate terminal tab, run the
+6. With the local server running in a separate terminal tab, run the
    following curl request to the `POST /customers` endpoint:
 
     ```sh
