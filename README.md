@@ -225,18 +225,18 @@ Customer documents and related API responses:
 1. In `schema/collections.fsl`, add the following `totalPurchaseAmt` computed
   field definition to the `Customer` collection:
 
-    ```fsl
+    ```diff
     collection Customer {
       ...
       // Use a computed field to get the set of Orders for a customer.
       compute orders: Set<Order> = (customer => Order.byCustomer(customer))
 
-      // Use a computed field to calculate the customer's cumulative purchase total.
-      // The field sums purchase `total` values from the customer's linked Order documents.
-      compute totalPurchaseAmt: Number = (customer => customer.orders.fold(0, (sum, order) => {
-        let order: Any = order
-        sum + order.total
-      }))
+    + // Use a computed field to calculate the customer's cumulative purchase total.
+    + // The field sums purchase `total` values from the customer's linked Order documents.
+    + compute totalPurchaseAmt: Number = (customer => customer.orders.fold(0, (sum, order) => {
+    +   let order: Any = order
+    +   sum + order.total
+    + }))
       ...
     }
     ...
@@ -253,14 +253,14 @@ Customer documents and related API responses:
 1. In `src/routes/customers/customers.controller.ts`, add the
    `totalPurchaseAmt` field to the `customerResponse` FQL template:
 
-    ```js
+    ```diff
     // Project Customer document fields for consistent responses.
     const customerResponse = fql`
       customer {
         id,
         name,
         email,
-        totalPurchaseAmt,
+    +   totalPurchaseAmt,
         address
       }
     `;
