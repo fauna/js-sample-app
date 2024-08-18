@@ -329,7 +329,7 @@ router.get(
       // the server to retrieve the next page of products.
       return res
         .status(200)
-        .send({ data: products.data, nextToken: products.after });
+        .send({ results: products.data, nextToken: products.after });
     } catch (error: any) {
       // Pass errors to the generic error-handling middleware.
       next(error);
