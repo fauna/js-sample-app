@@ -306,24 +306,30 @@ router.get(
           minPrice
         )}, to: ${Number(maxPrice)}})
         .pageSize(${Number(pageSize)}) {
+          id,
           name,
-          description,
           price,
-          stock
+          description,
+          stock,
+          category {
+            id,
+            name,
+            description
+          }
         }
       `;
 
       const { data: products } = await faunaClient.query<Page<Product>>(
         // If a nextToken is provided, use the Set.paginate function to get the next page of products.
         // Otherwise, use the query defined above which will fetch the first page of products.
-        nextToken ? fql`Set.paginate(${nextToken as string})` : query
+        nextToken ? fql`Set.paginate(${nextToken as string})` : query, { typecheck: false }
       );
 
       // Return the page of products and the next token to the user. The next token can be passed back to
       // the server to retrieve the next page of products.
       return res
         .status(200)
-        .send({ data: products.data, nextToken: products.after });
+        .send({ results: products.data, nextToken: products.after });
     } catch (error: any) {
       // Pass errors to the generic error-handling middleware.
       next(error);
