@@ -172,7 +172,7 @@ router.get(
         {
           id: order.id,
           payment: order.payment,
-          createdAt: order.createdAt,
+          createdAt: order.createdAt.toString(),
           status: order.status,
           total: order.total,
           items: order.items,
