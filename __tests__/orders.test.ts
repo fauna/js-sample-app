@@ -164,21 +164,23 @@ describe("Orders", () => {
 
     it("can paginate the list of orders", async () => {
       // Get the first page of orders.
-      const firstResp = await req(app).get(
-        `/customers/${customer.id}/orders?pageSize=1`
-      );
+      const firstResp = await req(app).get(`/customers/${customer.id}/orders?pageSize=1`);
       expect(firstResp.status).toEqual(200);
       expect(firstResp.body.results.length).toEqual(1);
+      expect(firstResp.body.nextToken).toBeDefined();
+
       // Get the second page of orders
-      const secondResp = await req(app).get(
-        `/customers/${customer.id}/orders?nextToken=${firstResp.body.nextToken}`
-      );
+      const secondResp = await req(app).get(`/customers/${customer.id}/orders?nextToken=${firstResp.body.nextToken}`);
       expect(secondResp.status).toEqual(200);
       expect(secondResp.body.results.length).toEqual(1);
+
       // Ensure the orders returned are different.
-      expect(firstResp.body.results[0].createdAt).not.toEqual(
-        secondResp.body.results[0].createdAt
-      );
+      expect(firstResp.body.results[0].createdAt).not.toEqual(secondResp.body.results[0].createdAt);
+
+      // Verify that the second page's nextToken is defined.
+      if (secondResp.body.nextToken) {
+        expect(secondResp.body.nextToken).toBeDefined();
+      }
     });
 
     it("returns a 400 if 'pageSize' is invalid", async () => {

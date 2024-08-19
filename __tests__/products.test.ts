@@ -57,20 +57,27 @@ describe("Products", () => {
     });
 
     it("can paginate the list of products", async () => {
-      // Get the first page of orders.
+      // Get the first page of products.
       const firstResp = await req(app).get("/products?pageSize=1");
       expect(firstResp.status).toEqual(200);
       expect(firstResp.body.results.length).toEqual(1);
-      // Get the second page of orders
+      expect(firstResp.body.nextToken).toBeDefined();
+
+      // Get the second page of products
       const secondResp = await req(app).get(
         `/products?nextToken=${firstResp.body.nextToken}`
       );
       expect(secondResp.status).toEqual(200);
       expect(secondResp.body.results.length).toEqual(1);
-      // Ensure the orders returned are different.
+      // Ensure the products returned are different.
       expect(firstResp.body.results[0].name).not.toEqual(
         secondResp.body.results[0].name
       );
+
+      // Verify that the second page's nextToken is defined.
+      if (secondResp.body.nextToken) {
+        expect(secondResp.body.nextToken).toBeDefined();
+      }
     });
 
     it("returns a 400 if 'pageSize' is invalid", async () => {
