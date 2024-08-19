@@ -338,8 +338,7 @@ components:
         results:
           - id: "123"
             payment: {}
-            createdAt:
-              isoString: "2099-08-09T16:43:07.153186Z"
+            createdAt: "2099-08-09T16:43:07.153186Z"
             status: cart
             total: 899
             items:
@@ -375,13 +374,10 @@ components:
           type: object
           description: Payment details for the order (currently empty).
         createdAt:
+          type: string
+          format: date-time
           type: object
-          description: Timestamp of when the order was created.
-          properties:
-            isoString:
-              type: string
-              format: date-time
-              description: ISO 8601 formatted timestamp.
+          description: ISO-8601-formatted timestamp of when the order was created.
         status:
           type: string
           description: Current status of the order.
@@ -403,8 +399,7 @@ components:
       example:
         id: "123"
         payment: {}
-        createdAt:
-          isoString: "2099-08-09T16:43:07.153186Z"
+        createdAt: "2099-08-09T16:43:07.153186Z"
         status: cart
         total: 899
         items:
