@@ -264,11 +264,16 @@ components:
             Pagination token. Pass the token to the endpoint's `nextToken` query
             parameter to get the next page of results.
       example:
-        data:
-          - name: The Old Man and the Sea
+        results:
+          - id: "123"
+            name: The Old Man and the Sea
             description: A book by Ernest Hemingway
             price: 899
             stock: 10
+            category:
+              id: "123"
+              name: "books"
+              description: "Bargain books!"
         nextToken: hdW...
     FilteredProductResponse:
       type: object
