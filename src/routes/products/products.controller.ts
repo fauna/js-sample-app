@@ -308,8 +308,8 @@ router.get(
         .pageSize(${Number(pageSize)}) {
           id,
           name,
-          description,
           price,
+          description,
           stock,
           category {
             id,
