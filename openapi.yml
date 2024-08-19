@@ -264,11 +264,16 @@ components:
             Pagination token. Pass the token to the endpoint's `nextToken` query
             parameter to get the next page of results.
       example:
-        data:
-          - name: The Old Man and the Sea
+        results:
+          - id: "123"
+            name: The Old Man and the Sea
             description: A book by Ernest Hemingway
             price: 899
             stock: 10
+            category:
+              id: "123"
+              name: "books"
+              description: "Bargain books!"
         nextToken: hdW...
     FilteredProductResponse:
       type: object
@@ -391,8 +396,7 @@ components:
         results:
           - id: "123"
             payment: {}
-            createdAt:
-              isoString: "2024-08-09T21:06:29.209471Z"
+            createdAt: "2024-08-09T21:06:29.209471Z"
             status: cart
             total: 53.92
             items:
@@ -452,11 +456,8 @@ components:
         payment:
           type: object
         createdAt:
-          type: object
-          properties:
-            isoString:
-              type: string
-              format: date-time
+          type: string
+          format: date-time
         status:
           type: string
           enum:

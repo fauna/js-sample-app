@@ -119,7 +119,7 @@ export const seedTestData = async () => {
   await Promise.all(productCreates);
 
   // Create a customer.
-  const c = mockCustomer({ name: "Valued Customer" });
+  const c = mockCustomer({ id: "999", name: "Valued Customer" });
   const customer = (
     await faunaClient.query<Customer>(
       fql`Customer.byEmail(${c.email}).first() ?? Customer.create(${c})`
@@ -145,7 +145,7 @@ export const seedTestData = async () => {
             customer: Customer.byId(${customer.id}),
             payment: {}
           })
-          let product: Any = Product.all().first()!
+          let product: Any = Product.byName("Drone").first()!
           OrderItem.create({ order: newOrder, product: product, quantity: 1 })
           newOrder
         } else {

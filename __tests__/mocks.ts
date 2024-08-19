@@ -17,6 +17,7 @@ export const mockAddr = (overrides?: {
 };
 
 export const mockCustomer = (overrides?: {
+  id?: string;
   name?: string;
   email?: string;
   address?: {
@@ -29,6 +30,7 @@ export const mockCustomer = (overrides?: {
 }) => {
   const fakeName = faker.internet.userName();
   return {
+    ...(overrides?.id && { id: overrides.id }),
     name: overrides?.name || fakeName,
     email:
       overrides?.email ||

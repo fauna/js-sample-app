@@ -1,55 +1,63 @@
 # Fauna JavaScript sample app
 
-This sample app shows how you can use [Fauna](https://fauna.com) in a
-production application.
+This sample app shows how to use [Fauna](https://fauna.com) in a production
+application.
 
 The app uses Node.js and the [Fauna v10 JavaScript
 driver](https://github.com/fauna/fauna-js) to create HTTP API endpoints for an
-e-commerce store. The source code includes comments that highlight best
-practices for the driver and Fauna Query Language (FQL) queries.
+e-commerce store. You can use the app's API endpoints to manage products,
+customers, and orders for the store.
 
-This README covers how to set up and run the app locally. For an overview of
-Fauna, see the [Fauna
-docs](https://docs.fauna.com/fauna/current/get_started/overview).
+The app uses Fauna schemas and queries to:
+
+- Read and write data with strong consistency.
+
+- Define and handle relationships between resources, such as linking orders
+  to products and customers.
+
+- Validate data changes against business logic.
+
+The app's source code includes comments that highlight Fauna best practices.
+
 
 ## Highlights
 
 The sample app uses the following Fauna features:
 
-- FQL queries ([Code example](/src/routes/products/products.controller.ts))
+- **[Document type
+  enforcement](https://docs.fauna.com/fauna/current/learn/schema/#type-enforcement):**
+  Collection schemas enforce a structure for the app's documents. Fauna rejects
+  document writes that don't conform to the schema, ensuring data consistency.
+  [Zero-downtime
+  migrations](https://docs.fauna.com/fauna/current/learn/schema/#schema-migrations)
+  let you safely change the schemas at any time.
 
-  Fauna stores data as JSON-like documents in collections. The app uses FQL
-  queries to retrieve, create, and update collection documents in a Fauna
-  database. The queries use:
+- **[Relationships](https://docs.fauna.com/fauna/current/learn/query/relationships/):**
+  Normalized references link documents across collections. The app's queries use
+  [projection](https://docs.fauna.com/fauna/current/reference/fql/projection/)
+  to dynamically retrieve linked documents, even when deeply nested. No complex
+  joins, aggregations, or duplication needed.
 
-  - [Pagination](https://docs.fauna.com/fauna/current/learn/query/pagination/)
-  - [Projection](https://docs.fauna.com/fauna/current/reference/fql/projection/)
-  - [FQL API methods](https://docs.fauna.com/fauna/current/reference/fql-api/),
-    such as
-    [`map()`](https://docs.fauna.com/fauna/current/reference/fql-api/schema-entities/set/map/)
+- **[Computed
+  fields](https://docs.fauna.com/fauna/current/learn/schema/#computed-fields):**
+  Computed fields dynamically calculate their values at query time. For example,
+  each customer's `orders` field uses a query to fetch a set of filtered orders.
+  Similarly, each order's `total` is calculated at query time based on linked
+  product prices and quantity.
 
-  See [Query data with FQL](https://docs.fauna.com/fauna/current/learn/query/).
+- **[Constraints](https://docs.fauna.com/fauna/current/learn/schema/#unique-constraints):**
+  The app uses constraints to ensure field values are valid. For example, the
+  app uses unique constraints to ensure each customer has a unique email address
+  and each product has a unique name. Similarly, check constraints ensure each
+  customer has only one cart at a time and that product prices are not negative.
 
-- Document relationships ([Code example](/schema/collections.fsl))
+- **[User-defined functions
+  (UDFs)](https://docs.fauna.com/fauna/current/learn/data-model/user-defined-functions/):**
+  The app uses UDFs to store business logic as reusable queries. For example,
+  the app uses a `checkout()` UDF to process order updates. `checkout()` calls
+  another UDF, `validateOrderStatusTransition()`, to validate `status`
+  transitions for orders.
 
-  Fauna supports dynamic one-to-one, one-to-many, and many-to-many relationships
-  between documents. You can use relationships to model complex data structures
-  without duplicating data. See [Document
-  relationships](https://docs.fauna.com/fauna/current/learn/query/relationships/).
-
-- Document type definitions ([Code example](/schema/collections.fsl))
-
-  You can use document types and zero-downtime migrations to progressively
-  enforce and evolve an app's data model. You define document types in
-  collection schemas using Fauna Schema Language (FSL). See
-  [Schema](https://docs.fauna.com/fauna/current/learn/schema/).
-
-- User-defined functions ([Code example](/schema/functions.fsl))
-
-  You can use user-defined functions (UDFs) to encapsulate business logic as a
-  manageable, maintainable resource in Fauna. You define UDFs as FSL schema. See
-  [User-defined
-  functions](https://docs.fauna.com/fauna/current/learn/data-model/user-defined-functions/).
 
 ## Requirements
 
@@ -71,7 +79,8 @@ You should also be familiar with basic Fauna CLI commands and usage. For an
 overview, see the [Fauna CLI
 docs](https://docs.fauna.com/fauna/current/tools/shell/).
 
-## Set up
+
+## Setup
 
 1. In your terminal, clone the repo and navigate to the `js-sample-app`
    directory. For example:
@@ -88,9 +97,9 @@ docs](https://docs.fauna.com/fauna/current/tools/shell/).
     - `ECommerce` is the default database for the project.
 
     - The project stores Fauna Schema Language (FSL) files in the
-      `/schema` directory.
+      `schema` directory.
 
-1. Log in to Fauna using the Fauna CLI:
+2. Log in to Fauna using the Fauna CLI:
 
     ```sh
     fauna cloud-login
@@ -101,13 +110,13 @@ docs](https://docs.fauna.com/fauna/current/tools/shell/).
     [Forgot Password](https://dashboard.fauna.com/forgot-password) workflow.
 
 
-1. Use the Fauna CLI to create the `ECommerce` database:
+3. Use the Fauna CLI to create the `ECommerce` database:
 
     ```sh
     fauna create-database --environment='' ECommerce
     ```
 
-1.  Push the FSL files in the `/schema` directory to the `ECommerce`
+4.  Push the FSL files in the `schema` directory to the `ECommerce`
     database:
 
     ```sh
@@ -116,9 +125,9 @@ docs](https://docs.fauna.com/fauna/current/tools/shell/).
 
     When prompted, accept and push the changes. The push creates the collections
     and user-defined functions (UDFs) defined in the FSL files of the
-    `/schema` directory.
+    `schema` directory.
 
-1. Create a key with the `server` role for the `ECommerce` database:
+5. Create a key with the `server` role for the `ECommerce` database:
 
     ```sh
     fauna create-key --environment='' ECommerce server
@@ -127,13 +136,13 @@ docs](https://docs.fauna.com/fauna/current/tools/shell/).
     Copy the returned `secret`. The app can use the key's secret to authenticate
     requests to the database.
 
-1. Make a copy of the `.env.example` file and name the copy `.env`. For example:
+6. Make a copy of the `.env.example` file and name the copy `.env`. For example:
 
     ```sh
     cp .env.example .env
     ```
 
-1.  In `.env`, set the `FAUNA_SECRET` environment variable to the secret you
+7.  In `.env`, set the `FAUNA_SECRET` environment variable to the secret you
     copied earlier:
 
     ```
@@ -141,6 +150,21 @@ docs](https://docs.fauna.com/fauna/current/tools/shell/).
     FAUNA_SECRET=fn...
     ...
     ```
+
+## Add sample data
+
+The app includes tests that check the app's API endpoints and create related documents
+in the `ECommerce` database.
+
+From the root directory, run:
+
+```sh
+npm install && npm run test
+```
+
+You can view documents created by the tests in the [Fauna
+Dashboard](https://dashboard.fauna.com/).
+
 
 ## Run the app
 
@@ -152,13 +176,15 @@ npm install && npm run dev
 
 Once started, the local server is available at http://localhost:8000.
 
+
 ## HTTP API endpoints
 
 The app's HTTP API endpoints are defined in `*.controller.ts` files in the
-`/src/routes` directory.
+`src/routes` directory.
 
 Reference documentation for the endpoints is available at
 https://fauna.github.io/js-sample-app/.
+
 
 ### Make API requests
 
@@ -166,39 +192,112 @@ You can use the endpoints to make API requests that read and write data from
 the `ECommerce` database.
 
 For example, with the local server running in a separate terminal tab, run the
-following curl request to the `POST /customers` endpoint. The request creates a
-`Customer` collection document in the `ECommerce` database.
+following curl request to the `POST /products` endpoint. The request creates a
+`Product` collection document in the `ECommerce` database.
 
-```
+```sh
 curl -v \
-  http://localhost:8000/customers \
+  http://localhost:8000/products \
   -H "Content-Type: application/json" \
   -d '{
-    "name": "Alice Appleseed",
-    "email": "alice.appleseed@example.com",
-    "address": {
-      "street": "87856 Mendota Court",
-      "city": "Washington",
-      "state": "DC",
-      "postalCode": "20220",
-      "country": "USA"
-    }
+    "name": "The Old Man and the Sea",
+    "price": 899,
+    "description": "A book by Ernest Hemingway",
+    "stock": 10,
+    "category": "books"
   }'
 ```
 
-You can view the documents for the collection in the [Fauna
-Dashboard](https://dashboard.fauna.com/).
 
-## Run tests
+## Expand the app
 
-The app includes tests that check the app's API endpoints and create related documents
-in the `ECommerce` database.
+You can further expand the app by adding fields and endpoints.
 
-From the root directory, run:
+As an example, the following steps adds a computed `totalPurchaseAmt` field to
+Customer documents and related API responses:
 
-```sh
-npm install && npm run test
-```
+1. If you haven't already, add the sample data:
 
-You can view documents created by the tests for each collection in the [Fauna
-Dashboard](https://dashboard.fauna.com/).
+    ```sh
+    npm install && npm run test
+    ```
+
+2. In `schema/collections.fsl`, add the following `totalPurchaseAmt` computed
+  field definition to the `Customer` collection:
+
+    ```diff
+    collection Customer {
+      ...
+      // Use a computed field to get the set of Orders for a customer.
+      compute orders: Set<Order> = (customer => Order.byCustomer(customer))
+
+    + // Use a computed field to calculate the customer's cumulative purchase total.
+    + // The field sums purchase `total` values from the customer's linked Order documents.
+    + compute totalPurchaseAmt: Number = (customer => customer.orders.fold(0, (sum, order) => {
+    +   let order: Any = order
+    +   sum + order.total
+    + }))
+      ...
+    }
+    ...
+    ```
+
+    Save `schema/collections.fsl`.
+
+3.  Push the updated schema to the `ECommerce` database:
+
+    ```sh
+    fauna schema push
+    ```
+
+4. In `src/routes/customers/customers.controller.ts`, add the
+   `totalPurchaseAmt` field to the `customerResponse` FQL template:
+
+    ```diff
+    // Project Customer document fields for consistent responses.
+    const customerResponse = fql`
+      customer {
+        id,
+        name,
+        email,
+    +   totalPurchaseAmt,
+        address
+      }
+    `;
+    ```
+
+    Save `src/routes/customers/customers.controller.ts`.
+
+   Customer-related endpoints use this template to project Customer
+   document fields in responses.
+
+5. Start the app server:
+
+    ```sh
+    npm install && npm run dev
+    ```
+
+6. With the local server running in a separate terminal tab, run the
+   following curl request to the `POST /customers` endpoint:
+
+    ```sh
+    curl -v http://localhost:8000/customers/999
+    ```
+
+    The response includes the computed `totalPurchaseAmt` field:
+
+    ```json
+    {
+      "id": "999",
+      "name": "Valued Customer",
+      "email": "valuedcustomer@fauna.com",
+      "totalPurchaseAmt": 27000,
+      "address": {
+        "street": "123 Main St",
+        "city": "San Francisco",
+        "state": "CA",
+        "postalCode": "12345",
+        "country": "United States"
+      }
+    }
+    ```

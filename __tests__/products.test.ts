@@ -325,12 +325,12 @@ describe("Products", () => {
         `/products/by-price?minPrice=${minPrice}&maxPrice=${maxPrice}`
       );
       expect(res.status).toEqual(200);
-      expect(res.body.data.length).toBeGreaterThan(0);
-      for (const product of res.body.data) {
+      expect(res.body.results.length).toBeGreaterThan(0);
+      for (const product of res.body.results) {
         expect(product.price).toBeGreaterThanOrEqual(minPrice);
         expect(product.price).toBeLessThanOrEqual(maxPrice);
         expect(Object.keys(product).sort()).toEqual(
-          ["name", "description", "price", "stock"].sort()
+          ["name", "category", "id", "description", "price", "stock"].sort()
         );
       }
     });
@@ -342,7 +342,7 @@ describe("Products", () => {
         `/products/by-price?minPrice=${minPrice}&maxPrice=${maxPrice}`
       );
       expect(res.status).toEqual(200);
-      expect(res.body.data.length).toEqual(0);
+      expect(res.body.results.length).toEqual(0);
     });
   });
 });
