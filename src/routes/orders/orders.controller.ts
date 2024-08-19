@@ -207,24 +207,8 @@ router.get(
       let customer: Any = Customer.byId(${customerId})!
       Order.byCustomer(customer).pageSize(${pageSizeNumber}).map((order) => {
         let order: Any = order
-<<<<<<< HEAD
         // Return the order as an OrderResponse object.
         ${orderResponse}
-=======
-        {
-          id: order.id,
-          payment: order.payment,
-          createdAt: order.createdAt.toString(),
-          status: order.status,
-          total: order.total,
-          items: order.items,
-          customer: {
-            id: customer.id,
-            name: customer.name,
-            email: customer.email
-          }
-        }
->>>>>>> origin/main
       })
     `;
 
