@@ -6,7 +6,7 @@
   "scripts": {
     "build": "tsc",
     "dev": "nodemon src/index.ts",
-    "docs": "redocly build-docs openapi.yml --output=docs/index.html",
+    "lint:openapi": "redocly lint openapi.yml",
     "start": "npm run build; node build/src/index.js",
     "test": "jest"
   },

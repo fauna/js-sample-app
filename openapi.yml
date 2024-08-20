@@ -2,6 +2,9 @@ openapi: 3.0.3
 info:
   title: Fauna JavaScript sample app
   version: 1.0.0
+  license:
+    name: Fauna terms
+    url: "https://fauna.com/terms"
   description: |
     HTTP API reference documentation for the [Fauna JavaScript sample
     app](https://github.com/fauna/js-sample-app).
@@ -22,7 +25,7 @@ info:
     For setup instructions, see the
     [README](https://github.com/fauna/js-sample-app).
 servers:
-  - url: "http://localhost:8000"
+  - url: /
     description: Local development server
 tags:
   - name: Customers
@@ -483,6 +486,9 @@ paths:
   /customers:
     post:
       summary: Create a customer.
+      operationId: create-customer
+      security:
+        - {}
       tags:
         - Customers
       description: Create a customer with the specified details.
@@ -570,6 +576,9 @@ paths:
   "/customers/{id}":
     get:
       summary: Get a customer.
+      operationId: get-customer
+      security:
+        - {}
       tags:
         - Customers
       description: Fetch the details of a customer by their ID.
@@ -639,6 +648,9 @@ paths:
             curl -v http://localhost:8000/customers/111
     patch:
       summary: Update a customer.
+      operationId: update-customer
+      security:
+        - {}
       tags:
         - Customers
       description: Update the details of a customer by their ID.
@@ -744,6 +756,9 @@ paths:
   /products:
     get:
       summary: Get a page of products.
+      operationId: get-products
+      security:
+        - {}
       tags:
         - Products
       parameters:
@@ -831,6 +846,9 @@ paths:
             curl -v 'http://localhost:8000/products?category=books&pageSize=1'
     post:
       summary: Create a product.
+      operationId: create-product
+      security:
+        - {}
       tags:
         - Products
       description: Create a product with the specified details.
@@ -928,6 +946,9 @@ paths:
   "/products/{id}":
     patch:
       summary: Update a product.
+      operationId: update-product
+      security:
+        - {}
       tags:
         - Products
       description: Update the details of a product by its ID.
@@ -1039,6 +1060,9 @@ paths:
   /products/by-price:
     get:
       summary: Get a page of products by price.
+      operationId: get-products-by-price
+      security:
+        - {}
       tags:
         - Products
       parameters:
@@ -1103,6 +1127,9 @@ paths:
   "/customers/{id}/cart":
     get:
       summary: Get a customer's cart.
+      operationId: get-customer-cart
+      security:
+        - {}
       tags:
         - Orders
       description: |
@@ -1138,6 +1165,9 @@ paths:
             curl -v http://localhost:8000/customers/111/cart
     post:
       summary: Get or create a customer's cart.
+      operationId: get-create-customer-cart
+      security:
+        - {}
       tags:
         - Orders
       description: |
@@ -1184,6 +1214,9 @@ paths:
   "/customers/{id}/cart/item":
     post:
       summary: Add an item to a customer's cart.
+      operationId: add-cart-item
+      security:
+        - {}
       tags:
         - Orders
       description: |
@@ -1254,6 +1287,9 @@ paths:
   "/orders/{id}":
     get:
       summary: Get an order.
+      operationId: get-order
+      security:
+        - {}
       tags:
         - Orders
       description: Get the details of an order by its ID.
@@ -1271,12 +1307,61 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/OrderResponse"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                example:
+                  summary: Invalid id
+                  value:
+                    message: Invalid id '!' provided.
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                example:
+                  summary: Unauthorized
+                  value:
+                    message: >-
+                      Unauthorized. Set the `FAUNA_SECRET` env var to a valid
+                      Fauna key's secret.
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                example:
+                  summary: No order with id
+                  value:
+                    message: No order with id '111' exists.
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                example-1:
+                  summary: Internal server error
+                  value:
+                    message: An unexpected error occurred
       x-codeSamples:
         - lang: curl
           source: |-
             curl -v http://localhost:8000/orders/123
     patch:
       summary: Update an order.
+      operationId: update-order
+      security:
+        - {}
       tags:
         - Orders
       description: >
@@ -1378,6 +1463,9 @@ paths:
   "/customers/{id}/orders":
     get:
       summary: Get a customer's orders.
+      operationId: get-customer-order
+      security:
+        - {}
       tags:
         - Orders
       description: Get the details of a customer's orders using the customer's ID.
