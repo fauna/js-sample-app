@@ -22,7 +22,6 @@ describe("Orders", () => {
     "status",
     "total",
   ];
-  const orderItemFields = ["id", "order", "product", "quantity"];
 
   beforeAll(async () => {
     const { products: p, customer: c, orders: o } = await seedTestData();
@@ -256,18 +255,18 @@ describe("Orders", () => {
         .post(`/customers/${customerRes.body.id}/cart/item`)
         .send({ productName: product.name, quantity: 1 });
       expect(firstResp.status).toEqual(200);
-      expect(firstResp.body.quantity).toEqual(1);
+      expect(firstResp.body.items[0].quantity).toEqual(1);
       expect(Object.keys(firstResp.body).sort()).toEqual(
-        orderItemFields.sort()
+        orderFields.sort()
       );
       // Update the quantity of the item in the cart.
       const secondResp = await req(app)
         .post(`/customers/${customerRes.body.id}/cart/item`)
         .send({ productName: product.name, quantity: 2 });
       expect(secondResp.status).toEqual(200);
-      expect(secondResp.body.quantity).toEqual(2);
+      expect(secondResp.body.items[0].quantity).toEqual(2);
       expect(Object.keys(secondResp.body).sort()).toEqual(
-        orderItemFields.sort()
+        orderFields.sort()
       );
     });
 

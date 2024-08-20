@@ -19,6 +19,37 @@ import { PaginatedRequest } from "../../types";
 
 const router = Router();
 
+// Define an object to use for consistent Order responses.
+const orderResponse = fql`{
+    id: order.id,
+    payment: order.payment,
+    createdAt: order.createdAt.toString(),
+    status: order.status,
+    total: order.total,
+    items: order.items.toArray().map((item) => {
+      product: {
+        id: item.product.id,
+        name: item.product.name,
+        price: item.product.price,
+        description: item.product.description,
+        stock: item.product.stock,
+        category: {
+          id: item.product.category.id,
+          name: item.product.category.name,
+          description: item.product.category.description
+        }
+      },
+      quantity: item.quantity
+    }),
+    customer: {
+      id: order.customer.id,
+      name: order.customer.name,
+      email: order.customer.email,
+      address: order.customer.address
+    }
+  }
+  `;
+
 /**
  * Get an order by id.
  * @route {GET} /orders/:id
@@ -39,7 +70,10 @@ router.get(
       const { data: order } = await faunaClient.query<DocumentT<Order>>(
         // Get the Order document by id, using the ! operator to assert that the document exists.
         // If the document does not exist, Fauna will throw a document_not_found error.
-        fql`Order.byId(${id})!`
+        fql`let order: Any = Order.byId(${id})!
+        // Return the order as an OrderResponse object.
+        ${orderResponse}
+        `
       );
 
       // Return the order, stripping out any unnecessary fields.
@@ -87,7 +121,7 @@ router.patch(
     // error. We then use the validateOrderStatusTransition UDF to ensure that the order status transition
     // is valid. If the transition is not valid, the UDF will throw an abort error.
     const query = fql`
-      let order = Order.byId(${id})!
+      let order: Any = Order.byId(${id})!
       // Validate the order status transition if a status is provided.
       if (${status !== undefined}) {
         validateOrderStatusTransition(order!.status, ${status})
@@ -98,6 +132,8 @@ router.patch(
       }
       // Update the order with the new status and payment information.
       order.update(${{ status, payment }})
+      // Return the order as an OrderResponse object.
+      ${orderResponse}
     `;
 
     try {
@@ -112,7 +148,9 @@ router.patch(
         // of each product in the order. This ensures that the product stock is updated in the same transaction
         // as the order status.
         status === "processing"
-          ? fql`checkout(${id}, ${status}, ${payment})`
+          ? fql`let order: Any = checkout(${id}, ${status}, ${payment})
+            ${orderResponse}
+            `
           : query
       );
 
@@ -169,19 +207,8 @@ router.get(
       let customer: Any = Customer.byId(${customerId})!
       Order.byCustomer(customer).pageSize(${pageSizeNumber}).map((order) => {
         let order: Any = order
-        {
-          id: order.id,
-          payment: order.payment,
-          createdAt: order.createdAt.toString(),
-          status: order.status,
-          total: order.total,
-          items: order.items,
-          customer: {
-            id: customer.id,
-            name: customer.name,
-            email: customer.email
-          }
-        }
+        // Return the order as an OrderResponse object.
+        ${orderResponse}
       })
     `;
 
@@ -236,7 +263,10 @@ router.post(
       const { data: cart } = await faunaClient.query<DocumentT<Order>>(
         // Call our getOrCreateCart UDF to get the customer's cart. The function
         // definition can be found 'server/schema/functions.fsl'.
-        fql`getOrCreateCart(${id})`
+        fql`let order: Any = getOrCreateCart(${id})
+        // Return the cart as an OrderResponse object.
+        ${orderResponse}
+        `
       );
 
       // Return the cart, stripping out any unnecessary fields.
@@ -263,7 +293,7 @@ router.post(
  * @param id
  * @bodyparam product
  * @bodyparam quantity
- * @returns OrderItem
+ * @returns Order
  */
 router.post(
   "/customers/:id/cart/item",
@@ -282,7 +312,10 @@ router.post(
       const { data: cartItem } = await faunaClient.query<DocumentT<OrderItem>>(
         // Call our createOrUpdateCartItem UDF to add an item to the customer's cart. The function
         // definition can be found 'server/schema/functions.fsl'.
-        fql`createOrUpdateCartItem(${customerId}, ${productName}, ${quantity})`
+        fql`let order: Any = createOrUpdateCartItem(${customerId}, ${productName}, ${quantity})
+        // Return the cart as an OrderResponse object.
+        ${orderResponse}
+        `
       );
 
       // Return the cart item, stripping out any unnecessary fields.
@@ -330,7 +363,10 @@ router.get(
       const { data: cart } = await faunaClient.query<DocumentT<Order>>(
         // Get the customer's cart by id, using the ! operator to assert that the document exists.
         // If the document does not exist, Fauna will throw a document_not_found error.
-        fql`Customer.byId(${id})!.cart`
+        fql`let order: Any = Customer.byId(${id})!.cart
+        // Return the order as an OrderResponse object.
+        ${orderResponse}
+        `
       );
 
       // Return the cart, stripping out any unnecessary fields.

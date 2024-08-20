@@ -122,14 +122,14 @@ describe("Products", () => {
       const missingRes = await req(app).post(`/products`).send(rest);
       expect(missingRes.status).toEqual(400);
       expect(missingRes.body.message).toEqual(
-        "Price must be a number greater than 0."
+        "Price must be an integer greater than 0."
       );
       const invalidRes = await req(app)
         .post(`/products`)
         .send({ ...rest, price: "foo" });
       expect(invalidRes.status).toEqual(400);
       expect(invalidRes.body.message).toEqual(
-        "Price must be a number greater than 0."
+        "Price must be an integer greater than 0."
       );
     });
 
@@ -154,14 +154,14 @@ describe("Products", () => {
       const missingRes = await req(app).post(`/products`).send(rest);
       expect(missingRes.status).toEqual(400);
       expect(missingRes.body.message).toEqual(
-        "Stock must be a number greater than or equal to 0."
+        "Stock must be an integer greater than or equal to 0."
       );
       const invalidRes = await req(app)
         .post(`/products`)
         .send({ ...rest, stock: -1 });
       expect(invalidRes.status).toEqual(400);
       expect(invalidRes.body.message).toEqual(
-        "Stock must be a number greater than or equal to 0."
+        "Stock must be an integer greater than or equal to 0."
       );
     });
 
@@ -204,25 +204,25 @@ describe("Products", () => {
   describe("PATCH /products/:name", () => {
     it("updates a product", async () => {
       // Create a new product.
-      const product = mockProduct({ price: 10.99, category: "electronics" });
+      const product = mockProduct({ price: 10_99, category: "electronics" });
       const createRes = await req(app).post(`/products`).send(product);
       productsToCleanup.push(createRes.body);
       // Check that the product was created successfully.
       expect(createRes.status).toEqual(201);
-      expect(createRes.body.price).toEqual(10.99);
+      expect(createRes.body.price).toEqual(10_99);
       // Update the product.
       const updateRes = await req(app)
         .patch(`/products/${createRes.body.id}`)
-        .send({ price: 19.99 });
+        .send({ price: 19_99 });
       // Check that the product was updated successfully.
       expect(updateRes.status).toEqual(200);
-      expect(updateRes.body.price).toEqual(19.99);
+      expect(updateRes.body.price).toEqual(19_99);
       expect(updateRes.body.name).toEqual(product.name);
       expect(Object.keys(updateRes.body).sort()).toEqual(productFields.sort());
     });
 
     it("returns a 404 if the product does not exist", async () => {
-      const res = await req(app).patch(`/products/1234`).send({ price: 19.99 });
+      const res = await req(app).patch(`/products/1234`).send({ price: 19_99 });
       expect(res.status).toEqual(404);
       expect(res.body.message).toEqual("No product with id '1234' exists.");
     });
@@ -250,14 +250,14 @@ describe("Products", () => {
         .send({ price: "not a number" });
       expect(priceAsString.status).toEqual(400);
       expect(priceAsString.body.message).toEqual(
-        "Price must be a number greater than 0 or be omitted."
+        "Price must be an integer greater than 0 or be omitted."
       );
       const negativePrice = await req(app)
         .patch("/products/does-not-matter")
         .send({ price: -1 });
       expect(negativePrice.status).toEqual(400);
       expect(negativePrice.body.message).toEqual(
-        "Price must be a number greater than 0 or be omitted."
+        "Price must be an integer greater than 0 or be omitted."
       );
     });
 
@@ -267,14 +267,14 @@ describe("Products", () => {
         .send({ stock: "not a number" });
       expect(stockAsString.status).toEqual(400);
       expect(stockAsString.body.message).toEqual(
-        "Stock must be a number greater than or equal to 0 or be omitted."
+        "Stock must be an integer greater than or equal to 0 or be omitted."
       );
       const negativeStock = await req(app)
         .patch("/products/does-not-matter")
         .send({ stock: -1 });
       expect(negativeStock.status).toEqual(400);
       expect(negativeStock.body.message).toEqual(
-        "Stock must be a number greater than or equal to 0 or be omitted."
+        "Stock must be an integer greater than or equal to 0 or be omitted."
       );
     });
 
@@ -319,8 +319,8 @@ describe("Products", () => {
 
   describe("GET /products/by-price", () => {
     it("gets products within a price range", async () => {
-      const minPrice = 10;
-      const maxPrice = 50;
+      const minPrice = 10_00;
+      const maxPrice = 50_00;
       const res = await req(app).get(
         `/products/by-price?minPrice=${minPrice}&maxPrice=${maxPrice}`
       );
