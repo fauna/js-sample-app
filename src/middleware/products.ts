@@ -45,7 +45,7 @@ export const validateProductCreate = (
     });
   } else if (typeof price !== "number" || price <= 0) {
     return res.status(400).json({
-      message: "Price must be a number greater than 0.",
+      message: "Price must be an integer greater than 0.",
     });
   } else if (typeof description !== "string" || description.length === 0) {
     return res.status(400).json({
@@ -53,7 +53,7 @@ export const validateProductCreate = (
     });
   } else if (typeof stock !== "number" || stock < 0) {
     return res.status(400).json({
-      message: "Stock must be a number greater than or equal to 0.",
+      message: "Stock must be an integer greater than or equal to 0.",
     });
   } else if (typeof category !== "string" || category.length === 0) {
     return res.status(400).json({
@@ -75,7 +75,7 @@ export const validateProductUpdate = (
   // Validate the fields in the request body. They must be valid if they are present.
   if (price !== undefined && (typeof price !== "number" || price <= 0)) {
     return res.status(400).json({
-      message: "Price must be a number greater than 0 or be omitted.",
+      message: "Price must be an integer greater than 0 or be omitted.",
     });
   } else if (description !== undefined && typeof description !== "string") {
     return res.status(400).json({
@@ -84,7 +84,7 @@ export const validateProductUpdate = (
   } else if (stock !== undefined && (typeof stock !== "number" || stock < 0)) {
     return res.status(400).json({
       message:
-        "Stock must be a number greater than or equal to 0 or be omitted.",
+        "Stock must be an integer greater than or equal to 0 or be omitted.",
     });
   } else if (category !== undefined && typeof category !== "string") {
     return res.status(400).json({

@@ -155,19 +155,19 @@ components:
           type: string
           description: Description of the product.
         price:
-          type: number
+          type: integer
           description: |
             Price of the product in USD cents.
 
             Internally, the `Product` collection uses a check constraint to
-            ensure `price` is a positive number.
+            ensure `price` is an integer greater than zero.
         stock:
           type: integer
           description: |
             Quantity of the product available in stock.
 
             Internally, the `Product` collection uses a check constraint to
-            ensure `stock` is a positive integer.
+            ensure `stock` is greater than or equal to zero.
         category:
           type: string
           description: >
@@ -219,7 +219,7 @@ components:
           type: string
           description: Name of the product.
         price:
-          type: number
+          type: integer
           description: Price of the product in USD cents.
         description:
           type: string
@@ -285,7 +285,7 @@ components:
           type: string
           description: Description of the product.
         price:
-          type: number
+          type: integer
           description: Price of the product in USD cents.
         stock:
           type: integer
@@ -340,7 +340,8 @@ components:
               description: Pagination token for a list of items in the order.
         total:
           type: integer
-          description: Total number of items in the order.
+          description: |
+            Total cost of the order in USD cents.
         status:
           type: string
           description: Current status of the order.
@@ -465,8 +466,9 @@ components:
             - shipped
             - delivered
         total:
-          type: number
-          format: float
+          type: integer
+          description: |
+            Total cost of the order in USD cents.
         items:
           type: object
           properties:
@@ -586,16 +588,11 @@ components:
         quantity:
           type: integer
           description: >
-            Quantity of the product to add to the order.
-
-
-            Must be a non-negative integer. The quantity must be less than the
+            Quantity of the product to add to the order. Must be less than the
             product's `stock`.
 
-
             Internally, the `OrderItem` collection uses a check constraint to
-
-            ensure `quantity` is a positive integer.
+            ensure `quantity` is greater than or equal to zero.
       example:
         productName: The Old Man and the Sea
         quantity: 1
@@ -1019,7 +1016,7 @@ paths:
                 invalid-price:
                   summary: Invalid price.
                   value:
-                    message: Price must be a number greater than 0.
+                    message: Price must be an integer greater than 0.
                 invalid-desc:
                   summary: Invalid description.
                   value:
@@ -1027,7 +1024,7 @@ paths:
                 invalid-stock:
                   summary: Invalid stock.
                   value:
-                    message: Stock must be a number greater than or equal to 0.
+                    message: Stock must be an integer greater than or equal to 0.
                 invalid-cat:
                   summary: Invalid category.
                   value:
@@ -1123,7 +1120,7 @@ paths:
                 invalid-price:
                   summary: Invalid price.
                   value:
-                    message: Price must be a number greater than 0 or be omitted.
+                    message: Price must be an integer greater than 0 or be omitted.
                 invalid-desc:
                   summary: Invalid description.
                   value:
@@ -1132,7 +1129,7 @@ paths:
                   summary: Invalid stock.
                   value:
                     message: >-
-                      Stock must be a number greater than or equal to 0 or be
+                      Stock must be an integer greater than or equal to 0 or be
                       omitted.
                 invalid-cat:
                   summary: Invalid category.
@@ -1203,13 +1200,13 @@ paths:
         - name: minPrice
           in: query
           schema:
-            type: number
-          description: Minimum price to filter products by.
+            type: integer
+          description: Minimum price, in USD cents, to filter products by.
         - name: maxPrice
           in: query
           schema:
-            type: number
-          description: Maximum price to filter products by.
+            type: integer
+          description: Maximum price, in USD cents, to filter products by.
         - name: nextToken
           in: query
           schema:
