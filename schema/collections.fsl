@@ -2,10 +2,10 @@ collection Customer {
   name: String
   email: String
   address: {
-    street: String,
-    city: String,
-    state: String,
-    postalCode: String,
+    street: String
+    city: String
+    state: String
+    postalCode: String
     country: String
   }
 
