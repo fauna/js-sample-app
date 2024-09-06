@@ -316,10 +316,12 @@ router.get(
       // which require document reads.
       // Learn more about covered queries here: https://docs.fauna.com/fauna/current/learn/data_model/indexes#covered-queries
       const query = fql`
-        Product.sortedByPriceLowToHigh({ from: ${Number(
+        let products: Any = Product.sortedByPriceLowToHigh({ from: ${Number(
           minPrice
         )}, to: ${Number(maxPrice)}})
-        .pageSize(${Number(pageSize)}) {
+        .pageSize(${Number(pageSize)})
+
+        products {
           id,
           name,
           price,
@@ -336,7 +338,7 @@ router.get(
       const { data: products } = await faunaClient.query<Page<Product>>(
         // If a nextToken is provided, use the Set.paginate function to get the next page of products.
         // Otherwise, use the query defined above which will fetch the first page of products.
-        decodedNextToken ? fql`Set.paginate(${decodedNextToken})` : query, { typecheck: false }
+        decodedNextToken ? fql`Set.paginate(${decodedNextToken})` : query
       );
 
       // Encode the nextToken before sending it back to the client.
