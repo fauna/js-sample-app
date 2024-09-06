@@ -192,11 +192,13 @@ router.get(
   async (req: PaginatedRequest, res: Response, next: NextFunction) => {
     // Extract the customer id from the request parameters.
     const { id: customerId } = req.params;
-    // Extract the nextToken and pageSize from the request body
-    const { nextToken = undefined, pageSize = 10 } = req.query;
-    // Convert the pageSize query parameter to a number. Page size has
-    // already been validated in the validateGetOrders middleware.
-    const pageSizeNumber = Number(pageSize);
+    // Decode the nextToken from the query parameter, if it exists.
+    const decodedNextToken = req.query.nextToken
+      ? decodeURIComponent(req.query.nextToken as string)
+      : undefined;
+
+    // Extract the pageSize query parameter.
+    const pageSizeNumber = Number(req.query.pageSize || 10);
 
     // Define an FQL query to retrieve a page of orders for a given customer.
     // Get the Customer document by id, using the ! operator to assert that the document exists.
@@ -219,14 +221,18 @@ router.get(
       const { data: page } = await faunaClient.query<Page<Order>>(
         // If a nextToken is provided, use the Set.paginate function to get the next page of orders.
         // Otherwise, use the query defined above which will fetch the first page of orders.
-        nextToken ? fql`Set.paginate(${nextToken})` : query
+        decodedNextToken ? fql`Set.paginate(${decodedNextToken})` : query
       );
+
+      // Encode the nextToken before sending it back to the client.
+      // The raw after cursor can contain special characters.
+      const encodedNextToken = page.after ? encodeURIComponent(page.after) : null;
 
       // Return the page of orders and the next token to the user. The next token can be passed back to
       // the server to retrieve the next page of orders.
       return res
         .status(200)
-        .send({ results: page.data, nextToken: page.after });
+        .send({ results: page.data, nextToken: encodedNextToken});
     } catch (error: any) {
       // A ServiceError represents an error that occurred within Fauna.
       if (error instanceof ServiceError) {
