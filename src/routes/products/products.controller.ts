@@ -40,6 +40,11 @@ router.get(
     // Extract the category query parameter from the request.
     const { category, nextToken = undefined, pageSize = 10 } = req.query;
 
+    // Decode the nextToken from the query parameter, if it exists.
+    const decodedNextToken = nextToken
+      ? decodeURIComponent(nextToken as string)
+      : undefined;
+
     // Convert the pageSize query parameter to a number. Page size has
     // already been validated in the validateGetProducts middleware.
     const pageSizeNumber = Number(pageSize);
@@ -85,14 +90,18 @@ router.get(
       const { data: page } = await faunaClient.query<Page<Product>>(
         // If a nextToken is provided, use the Set.paginate function to get the next page of products.
         // Otherwise, use the query defined above which will fetch the first page of products.
-        nextToken ? fql`Set.paginate(${nextToken})` : query
+        decodedNextToken ? fql`Set.paginate(${decodedNextToken})` : query
       );
+
+      // Encode the nextToken before sending it back to the client.
+      // The raw after cursor can contain special characters.
+      const encodedNextToken = page.after ? encodeURIComponent(page.after) : null;
 
       // Return the page of products and the next token to the user. The next token can be passed back to
       // the server to retrieve the next page of products.
       return res
         .status(200)
-        .send({ results: page.data, nextToken: page.after });
+        .send({ results: page.data, nextToken: encodedNextToken });
     } catch (error: any) {
       // Pass errors to the generic error-handling middleware.
       next(error);
@@ -283,13 +292,18 @@ router.get(
     res: Response,
     next: NextFunction
   ) => {
-    // Extract the minPrice, maxPrice, minStock, and maxStock query parameters from the request.
+    // Extract the minPrice, maxPrice, pageSize, and nextToken query parameters from the request.
     const {
       minPrice = 0,
       maxPrice = 10000,
       pageSize = 25,
       nextToken = undefined,
     } = req.query;
+
+    // Decode the nextToken from the query parameter, if it exists.
+    const decodedNextToken = nextToken
+      ? decodeURIComponent(nextToken as string)
+      : undefined;
 
     try {
       // This is an example of a covered query.  A covered query is a query where all fields
@@ -322,14 +336,18 @@ router.get(
       const { data: products } = await faunaClient.query<Page<Product>>(
         // If a nextToken is provided, use the Set.paginate function to get the next page of products.
         // Otherwise, use the query defined above which will fetch the first page of products.
-        nextToken ? fql`Set.paginate(${nextToken as string})` : query, { typecheck: false }
+        decodedNextToken ? fql`Set.paginate(${decodedNextToken})` : query, { typecheck: false }
       );
+
+      // Encode the nextToken before sending it back to the client.
+      // The raw after cursor can contain special characters.
+      const encodedNextToken = products.after ? encodeURIComponent(products.after) : null;
 
       // Return the page of products and the next token to the user. The next token can be passed back to
       // the server to retrieve the next page of products.
       return res
         .status(200)
-        .send({ results: products.data, nextToken: products.after });
+        .send({ results: products.data, nextToken: encodedNextToken });
     } catch (error: any) {
       // Pass errors to the generic error-handling middleware.
       next(error);
