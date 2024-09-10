@@ -5,8 +5,6 @@ export interface Customer extends QueryValueObject {
   id: string;
   name: string;
   email: string;
-  cart: Order | null;
-  orders: Order[];
   address: {
     street: string;
     city: string;
