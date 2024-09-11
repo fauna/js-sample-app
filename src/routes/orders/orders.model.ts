@@ -12,8 +12,6 @@ export interface Order extends QueryValueObject {
 }
 
 export interface OrderItem extends QueryValueObject {
-  id: string;
-  order: Order;
   product: Product;
   quantity: number;
 }
