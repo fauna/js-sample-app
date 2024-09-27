@@ -82,8 +82,7 @@ docs](https://docs.fauna.com/fauna/current/tools/shell/).
 
 ## Setup
 
-1. In your terminal, clone the repo and navigate to the `js-sample-app`
-   directory. For example:
+1. Clone the repo and navigate to the `js-sample-app` directory:
 
     ```sh
     git clone git@github.com:fauna/js-sample-app.git
@@ -105,6 +104,15 @@ docs](https://docs.fauna.com/fauna/current/tools/shell/).
     fauna cloud-login
     ```
 
+    When prompted, enter:
+
+      * **Endpoint name:** `cloud` (Press Enter)
+      * **Email address:** The email address for your Fauna account.
+      * **Password:** The password for your Fauna account.
+      * **Which endpoint would you like to set as default?** The `cloud-*`
+        endpoint for your preferred region group. For example, to use the US
+        region group, use `cloud-us`.
+
     The command requires an email and password login. If you log in to the Fauna
     using GitHub or Netlify, you can enable email and password login using the
     [Forgot Password](https://dashboard.fauna.com/forgot-password) workflow.
@@ -116,7 +124,22 @@ docs](https://docs.fauna.com/fauna/current/tools/shell/).
     fauna create-database --environment='' ECommerce
     ```
 
-4.  Push the FSL files in the `schema` directory to the `ECommerce`
+4. Create a
+   [`.fauna-project`](https://docs.fauna.com/fauna/current/tools/shell/#proj-config)
+   config file for the project:
+
+   ```sh
+   fauna project init
+   ```
+
+   When prompted, enter:
+
+    * `schema` as the schema directory.
+    * `dev` as the environment name.
+    * The default endpoint.
+    * `ECommerce` as the database.
+
+5.  Push the FSL files in the `schema` directory to the `ECommerce`
     database:
 
     ```sh
@@ -127,7 +150,7 @@ docs](https://docs.fauna.com/fauna/current/tools/shell/).
     and user-defined functions (UDFs) defined in the FSL files of the
     `schema` directory.
 
-5. Create a key with the `server` role for the `ECommerce` database:
+6. Create a key with the `server` role for the `ECommerce` database:
 
     ```sh
     fauna create-key --environment='' ECommerce server
@@ -136,13 +159,13 @@ docs](https://docs.fauna.com/fauna/current/tools/shell/).
     Copy the returned `secret`. The app can use the key's secret to authenticate
     requests to the database.
 
-6. Make a copy of the `.env.example` file and name the copy `.env`. For example:
+7. Make a copy of the `.env.example` file and name the copy `.env`. For example:
 
     ```sh
     cp .env.example .env
     ```
 
-7.  In `.env`, set the `FAUNA_SECRET` environment variable to the secret you
+8.  In `.env`, set the `FAUNA_SECRET` environment variable to the secret you
     copied earlier:
 
     ```
