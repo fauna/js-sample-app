@@ -140,15 +140,15 @@ docs](https://docs.fauna.com/fauna/current/tools/shell/).
     * `ECommerce` as the database.
 
 5.  Push the FSL files in the `schema` directory to the `ECommerce`
-    database:
+    database without staging:
 
     ```sh
-    fauna schema push
+    fauna schema push --active
     ```
 
     When prompted, accept and push the changes. The push creates the collections
-    and user-defined functions (UDFs) defined in the FSL files of the
-    `schema` directory.
+    and user-defined functions (UDFs) defined in the FSL files of the `schema`
+    directory.
 
 6. Create a key with the `server` role for the `ECommerce` database:
 
@@ -270,7 +270,7 @@ Customer documents and related API responses:
 3.  Push the updated schema to the `ECommerce` database:
 
     ```sh
-    fauna schema push
+    fauna schema push --active
     ```
 
 4. In `src/routes/customers/customers.controller.ts`, add the
