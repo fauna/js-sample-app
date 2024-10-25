@@ -121,7 +121,7 @@ docs](https://docs.fauna.com/fauna/current/tools/shell/).
 3. Use the Fauna CLI to create the `ECommerce` database:
 
     ```sh
-    fauna create-database --environment='' ECommerce
+    fauna create-database ECommerce
     ```
 
 4. Create a
