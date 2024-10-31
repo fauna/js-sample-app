@@ -68,11 +68,12 @@ To run the app, you'll need:
 
 - [Node.js](https://nodejs.org/en/download/) v20.x or later
 
-- The [Fauna CLI](https://docs.fauna.com/fauna/current/tools/shell/). To install
-  the CLI, run:
+- [Fauna CLI](https://docs.fauna.com/fauna/current/tools/shell/) v3.0.0 or later.
+
+  To install the CLI, run:
 
     ```sh
-    npm install -g fauna-shell
+    npm install -g fauna-shell@latest
     ```
 
 You should also be familiar with basic Fauna CLI commands and usage. For an
