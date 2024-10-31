@@ -89,15 +89,6 @@ docs](https://docs.fauna.com/fauna/current/tools/shell/).
     cd js-sample-app
     ```
 
-    The repo includes a
-   [`.fauna-project`](https://docs.fauna.com/fauna/current/tools/shell/#proj-config)
-   file that contains defaults for the Fauna CLI. The file indicates:
-
-    - `ECommerce` is the default database for the project.
-
-    - The project stores Fauna Schema Language (FSL) files in the
-      `schema` directory.
-
 2. Log in to Fauna using the Fauna CLI:
 
     ```sh
