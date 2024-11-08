@@ -105,7 +105,7 @@ docs](https://docs.fauna.com/fauna/current/tools/shell/).
         endpoint for your preferred region group. For example, to use the US
         region group, use `cloud-us`.
 
-    The command requires an email and password login. If you log in to the Fauna
+    The command requires an email and password login. If you log in to Fauna
     using GitHub or Netlify, you can enable email and password login using the
     [Forgot Password](https://dashboard.fauna.com/forgot-password) workflow.
 
