@@ -72,9 +72,8 @@ collection Order {
 
   compute items: Set<OrderItem> = (order => OrderItem.byOrder(order))
   compute total: Number = (order => order.items.fold(0, (sum, orderItem) => {
-    let orderItem: Any = orderItem
     if (orderItem.product != null) {
-      sum + orderItem.product.price * orderItem.quantity
+      sum + orderItem.product!.price * orderItem.quantity
     } else {
       sum
     }
