@@ -263,7 +263,6 @@ Customer documents and related API responses:
     + // Use a computed field to calculate the customer's cumulative purchase total.
     + // The field sums purchase `total` values from the customer's linked Order documents.
     + compute totalPurchaseAmt: Number = (customer => customer.orders.fold(0, (sum, order) => {
-    +   let order: Any = order
     +   sum + order.total
     + }))
       ...
