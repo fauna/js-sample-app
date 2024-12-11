@@ -42,7 +42,7 @@ router.get(
         // Get the Customer document by id, using the ! operator to assert that the document exists.
         // If the document does not exist, Fauna will throw a document_not_found error.
         // Use projection to only return the fields you need.
-        fql`let customer = Customer.byId(${id})!
+        fql`let customer: Any = Customer.byId(${id})!
           // Return projected fields for the response.
           ${customerResponse}
         `
@@ -95,7 +95,7 @@ router.post(
       const { data: customer } = await faunaClient.query<DocumentT<Customer>>(
         // Create a new Customer document with the provided fields.
         // Use projection to only return the fields you need.
-        fql`let customer = Customer.create(${{ name, email, address }})
+        fql`let customer: Any = Customer.create(${{ name, email, address }})
           // Return projected fields for the response.
           ${customerResponse}
         `
@@ -154,7 +154,7 @@ router.patch(
         // Get the Customer document by id, using the ! operator to assert that the document exists.
         // If the document does not exist, Fauna will throw a document_not_found error.
         // Use projection to only return the fields you need.
-        fql`let customer = Customer.byId(${id})!.update(${{ name, email, address }})
+        fql`let customer: Any = Customer.byId(${id})!.update(${{ name, email, address }})
           // Return projected fields for the response.
           ${customerResponse}
         `

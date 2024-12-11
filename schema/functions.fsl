@@ -70,7 +70,7 @@ function getOrCreateCart(id) {
 
 function checkout(orderId, status, payment) {
   // Find the order by id, using the ! operator to assert that the order exists.
-  let order = Order.byId(orderId)!
+  let order: Any = Order.byId(orderId)!
 
   // Check that we are setting the order to the processing status. If not, we should
   // not be calling this function.
@@ -98,7 +98,7 @@ function checkout(orderId, status, payment) {
 
   // Check that the order items are still in stock.
   order!.items.forEach((item) => {
-    let product = item.product
+    let product: Any = item.product
     if (product.stock < item.quantity) {
       abort("One of the selected products does not have the requested quantity in stock.")
     }
@@ -106,7 +106,7 @@ function checkout(orderId, status, payment) {
 
   // Decrement the stock of each product in the order.
   order!.items.forEach((item) => {
-    let product = item.product
+    let product: Any = item.product
     product.update({ stock: product.stock - item.quantity })
   })
 
