@@ -100,7 +100,7 @@ export const seedTestData = async () => {
       });
       productCreates.push(
         faunaClient.query<Product>(fql`
-          let p = Product.byName(${product.name}).first()
+          let p: Any = Product.byName(${product.name}).first()
           if (p != null) {
             p!.update({ stock: ${product.stock} })
           } else {
@@ -139,13 +139,13 @@ export const seedTestData = async () => {
       await faunaClient.query<Order>(fql`
         let order = Order.byCustomer(Customer.byId(${customer.id})).firstWhere(o => o.status == ${status})
         if (order == null) {
-          let newOrder = Order.create({
+          let newOrder: Any = Order.create({
             createdAt: Time.now(),
             status: ${status},
             customer: Customer.byId(${customer.id}),
             payment: {}
           })
-          let product = Product.byName("Drone").first()!
+          let product: Any = Product.byName("Drone").first()!
           OrderItem.create({ order: newOrder, product: product, quantity: 1 })
           newOrder
         } else {

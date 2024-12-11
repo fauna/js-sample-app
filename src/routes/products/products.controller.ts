@@ -72,17 +72,14 @@ router.get(
         // new object with the desired fields.
         .map(product => {
           let product: Any = product
+          let category: Any = product.category
           {
             id: product.id,
             name: product.name,
             price: product.price,
             description: product.description,
             stock: product.stock,
-            category: {
-              id: product.category.id,
-              name: product.category.name,
-              description: product.category.description
-            }
+            category: { id: category.id, name: category.name, description: category.description },
           }
         })
       `;
@@ -146,7 +143,7 @@ router.post(
           if (category == null) abort("Category does not exist.")
           // Create the product with the given values.
           let args = { name: ${name}, price: ${price}, stock: ${stock}, description: ${description}, category: category }
-          let product = Product.create(args)
+          let product: Any = Product.create(args)
           // Use projection to only return the fields you need.
           product {
             id,
@@ -222,7 +219,7 @@ router.patch(
         fql`
           // Get the product by id, using the ! operator to assert that the product exists.
           // If it does not exist Fauna will throw a document_not_found error.
-          let product = Product.byId(${id})!
+          let product: Any = Product.byId(${id})!
           // Get the category by name. We can use .first() here because we know that the category
           // name is unique.
           let category = Category.byName(${category ?? ""}).first()
@@ -319,7 +316,7 @@ router.get(
       // which require document reads.
       // Learn more about covered queries here: https://docs.fauna.com/fauna/current/learn/data_model/indexes#covered-queries
       const query = fql`
-        let products = Product.sortedByPriceLowToHigh({ from: ${Number(
+        let products: Any = Product.sortedByPriceLowToHigh({ from: ${Number(
           minPrice
         )}, to: ${Number(maxPrice)}})
         .pageSize(${Number(pageSize)})
