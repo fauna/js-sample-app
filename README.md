@@ -68,18 +68,13 @@ To run the app, you'll need:
 
 - [Node.js](https://nodejs.org/en/download/) v20.x or later
 
-- [Fauna CLI](https://docs.fauna.com/fauna/current/tools/shell/) v3.0.0 or later.
+- [Fauna CLI](https://docs.fauna.com/fauna/current/tools/shell/) 4.0.0-beta or later.
 
   To install the CLI, run:
 
     ```sh
-    npm install -g fauna-shell@latest
+    npm install -g fauna-shell@">=4.0.0-beta"
     ```
-
-You should also be familiar with basic Fauna CLI commands and usage. For an
-overview, see the [Fauna CLI
-docs](https://docs.fauna.com/fauna/current/tools/shell/).
-
 
 ## Setup
 
@@ -90,88 +85,70 @@ docs](https://docs.fauna.com/fauna/current/tools/shell/).
     cd js-sample-app
     ```
 
-2. Log in to Fauna using the Fauna CLI:
+2. If you haven't already, log in to Fauna using the Fauna CLI:
 
     ```sh
-    fauna cloud-login
+    fauna login
     ```
 
-    When prompted, enter:
-
-      * **Endpoint name:** `cloud` (Press Enter)
-      * **Email address:** The email address for your Fauna account.
-      * **Password:** The password for your Fauna account.
-      * **Which endpoint would you like to set as default?** The `cloud-*`
-        endpoint for your preferred region group. For example, to use the US
-        region group, use `cloud-us`.
-
-    The command requires an email and password login. If you log in to Fauna
-    using GitHub or Netlify, you can enable email and password login using the
-    [Forgot Password](https://dashboard.fauna.com/forgot-password) workflow.
-
-
-3. Use the Fauna CLI to create the `ECommerce` database:
+3. Use the CLI to create the `ECommerce` database:
 
     ```sh
-    fauna create-database ECommerce
+    # Replace 'us-std' with your preferred Region Group
+    # identifier: 'us-std' (United States), 'eu-std' (Europe),
+    # or `global`.
+    fauna database create \
+      --name ECommerce \
+      --database us-std
     ```
 
-4. Create a
-   [`.fauna-project`](https://docs.fauna.com/fauna/current/tools/shell/#proj-config)
-   config file for the project:
-
-   ```sh
-   fauna project init
-   ```
-
-   When prompted, enter:
-
-    * `schema` as the schema directory.
-    * `dev` as the environment name.
-    * The default endpoint.
-    * `ECommerce` as the database.
-
-5.  Push the `.fsl` files in the `schema` directory to the `ECommerce`
+4.  Push the `.fsl` files in the `schema`directory to the `ECommerce`
     database:
 
     ```sh
-    fauna schema push
+    # Replace 'us-std' with your Region Group identifier.
+    fauna schema push \
+      --database us-std/ECommerce \
+      --dir ./schema
     ```
 
     When prompted, accept and stage the schema.
 
-6.  Check the status of the staged schema:
+5.  Check the status of the staged schema:
 
     ```sh
-    fauna schema status
+    fauna schema status \
+      --database us-std/ECommerce
     ```
 
-7.  When the status is `ready`, commit the staged schema to the database:
+6.  When the status is `ready`, commit the staged schema to the database:
 
     ```sh
-    fauna schema commit
+    fauna schema commit \
+      --database us-std/ECommerce
     ```
 
     The commit applies the staged schema to the database. The commit creates the
     collections and user-defined functions (UDFs) defined in the `.fsl` files of the
     `schema` directory.
 
-8. Create a key with the `server` role for the `ECommerce` database:
+7. Create a key with the `server` role for the `ECommerce` database:
 
     ```sh
-    fauna create-key --environment='' ECommerce server
+    fauna query "Key.create({ role: 'server' })" \
+      --database us-std/ECommerce
     ```
 
     Copy the returned `secret`. The app can use the key's secret to authenticate
     requests to the database.
 
-9. Make a copy of the `.env.example` file and name the copy `.env`. For example:
+8. Make a copy of the `.env.example` file and name the copy `.env`. For example:
 
     ```sh
     cp .env.example .env
     ```
 
-10. In `.env`, set the `FAUNA_SECRET` environment variable to the secret you
+9.  In `.env`, set the `FAUNA_SECRET` environment variable to the secret you
     copied earlier:
 
     ```
@@ -276,7 +253,9 @@ Customer documents and related API responses:
 3.  Push the updated schema to the `ECommerce` database:
 
     ```sh
-    fauna schema push
+    fauna schema push \
+      --database us-std/ECommerce \
+      --dir ./schema
     ```
 
     When prompted, accept and stage the schema.
@@ -284,14 +263,16 @@ Customer documents and related API responses:
 4.  Check the status of the staged schema:
 
     ```sh
-    fauna schema status
+    fauna schema status \
+      --database us-std/ECommerce
     ```
 
 5.  When the status is `ready`, commit the staged schema changes to the
     database:
 
     ```sh
-    fauna schema commit
+    fauna schema commit \
+      --database us-std/ECommerce
     ```
 
 6. In `src/routes/customers/customers.controller.ts`, add the
@@ -312,8 +293,8 @@ Customer documents and related API responses:
 
     Save `src/routes/customers/customers.controller.ts`.
 
-   Customer-related endpoints use this template to project Customer
-   document fields in responses.
+    Customer-related endpoints use this template to project Customer
+    document fields in responses.
 
 7. Start the app server:
 
