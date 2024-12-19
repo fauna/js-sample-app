@@ -68,7 +68,7 @@ To run the app, you'll need:
 
 - [Node.js](https://nodejs.org/en/download/) v20.x or later
 
-- [Fauna CLI](https://docs.fauna.com/fauna/current/tools/shell/) 4.0.0-beta or later.
+- [Fauna CLI v4 beta](https://docs.fauna.com/fauna/current/build/cli/v4/) or later.
 
   To install the CLI, run:
 
@@ -107,8 +107,7 @@ To run the app, you'll need:
     ```sh
     # Replace 'us' with your Region Group.
     fauna schema push \
-      --database us/ECommerce \
-      --dir ./schema
+      --database us/ECommerce
     ```
 
     When prompted, accept and stage the schema.
@@ -210,7 +209,7 @@ curl -v \
     "description": "A book by Ernest Hemingway",
     "stock": 10,
     "category": "books"
-  }'
+  }' | jq .
 ```
 
 
@@ -253,8 +252,7 @@ Customer documents and related API responses:
 
     ```sh
     fauna schema push \
-      --database us/ECommerce \
-      --dir ./schema
+      --database us/ECommerce
     ```
 
     When prompted, accept and stage the schema.
@@ -283,7 +281,7 @@ Customer documents and related API responses:
       customer {
         id,
         name,
-        email,
+    +   email,
     +   totalPurchaseAmt,
         address
       }
@@ -305,7 +303,7 @@ Customer documents and related API responses:
    following curl request to the `POST /customers` endpoint:
 
     ```sh
-    curl -v http://localhost:8000/customers/999
+    curl -v http://localhost:8000/customers/999 | jq .
     ```
 
     The response includes the computed `totalPurchaseAmt` field:
