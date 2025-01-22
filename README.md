@@ -94,7 +94,7 @@ To run the app, you'll need:
 3. Use the CLI to create the `ECommerce` database:
 
     ```sh
-    # Replace 'us' with your preferred Region Group:
+    # Replace 'us' with your preferred region group:
     # 'us' (United States), 'eu' (Europe), or `global`.
     fauna database create \
       --name ECommerce \
@@ -105,7 +105,7 @@ To run the app, you'll need:
     database:
 
     ```sh
-    # Replace 'us' with your Region Group.
+    # Replace 'us' with your region group.
     fauna schema push \
       --database us/ECommerce
     ```
