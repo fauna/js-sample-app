@@ -66,7 +66,7 @@ To run the app, you'll need:
 - A [Fauna account](https://dashboard.fauna.com/register). You can sign up for a
   free account at https://dashboard.fauna.com/register.
 
-- [Node.js](https://nodejs.org/en/download/) v20.x or later.
+- [Node.js](https://nodejs.org/en/download/) v22.x or later.
 
 - [Fauna CLI v4](https://docs.fauna.com/fauna/current/build/cli/v4/).
 
